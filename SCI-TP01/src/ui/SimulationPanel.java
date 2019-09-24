@@ -48,6 +48,22 @@ public class SimulationPanel extends JPanel {
 				if (particle != null) {
 					g.setColor(particle.getColor());
 					g.fillRect(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
+
+					g.setColor(Color.BLUE);
+					if (particle.getPasX() == -1) {
+					}
+
+					if (particle.getPasX() == 1) {
+
+					}
+
+					if (particle.getPasY() == -1) {
+
+					}
+
+					if (particle.getPasY() == 1) {
+
+					}
 				}
 			}
 		}
