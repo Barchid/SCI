@@ -34,10 +34,7 @@ public class Scheduler extends Observable {
 	 * Runs the simulation of the multi agent system
 	 */
 	public void run() throws Exception {
-		this.setChanged();
-		this.notifyObservers();
-		// sleep for delay
-		Thread.sleep(this.appConfig.getDelay());
+
 		for (int i = 0; this.appConfig.getNbTicks() == 0 || i < this.appConfig.getNbTicks(); i++) {
 			int nbCollisions = 0;
 			// Depending on the selected scheduling
