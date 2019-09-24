@@ -1,27 +1,24 @@
-package agent;
+package particles;
 
 import java.awt.Color;
 
-import environment.Environment;
+import core.Agent;
+import core.Environment;
 
-public class Particle {
-	private int posX; // current X position of particle
-	private int posY; // current Y position of particle
-	private int pasX; // current X direction of particle
-	private int pasY; // current Y direction of particle
-	private Color color; // integer that indicates the COLOR of the agent
-	private Environment environment;
+/**
+ * 
+ * @author samib
+ * 
+ *         Only Agent in the bouncing MAS
+ */
+public class Particle extends Agent {
 
 	public Particle(int posX, int posY, int pasX, int pasY, Environment environment) {
-		super();
-		this.posX = posX;
-		this.posY = posY;
-		this.pasX = pasX;
-		this.pasY = pasY;
-		this.color = Color.BLACK; // No collision
-		this.environment = environment;
+		super(posX, posY, pasX, pasY, environment);
+		this.setColor(Color.BLACK);
 	}
 
+	@Override
 	public void decide() {
 		int newX = this.posX + this.pasX;
 		int newY = this.posY + this.pasY;
@@ -65,7 +62,7 @@ public class Particle {
 	private void moveParticleCollision(int x, int y) {
 		this.color = Color.RED; // red
 
-		Particle particle = this.environment.getCell(x, y);
+		Particle particle = (Particle) this.environment.getCell(x, y);
 		int newPasX = particle.getPasX();
 		int newPasY = particle.getPasY();
 		particle.reactToCollision(this);
@@ -118,50 +115,10 @@ public class Particle {
 	 * 
 	 * @param particle
 	 */
-	public void reactToCollision(Particle particle) {
+	public void reactToCollision(Agent particle) {
 		this.color = Color.RED; // red
 		// exchange directions
 		this.pasX = particle.getPasX();
 		this.pasY = particle.getPasY();
-	}
-
-	public int getPosX() {
-		return posX;
-	}
-
-	public void setPosX(int posX) {
-		this.posX = posX;
-	}
-
-	public int getPosY() {
-		return posY;
-	}
-
-	public void setPosY(int posY) {
-		this.posY = posY;
-	}
-
-	public int getPasX() {
-		return pasX;
-	}
-
-	public void setPasX(int pasX) {
-		this.pasX = pasX;
-	}
-
-	public int getPasY() {
-		return pasY;
-	}
-
-	public void setPasY(int pasY) {
-		this.pasY = pasY;
-	}
-
-	public Color getColor() {
-		return color;
-	}
-
-	public void setColor(Color color) {
-		this.color = color;
 	}
 }

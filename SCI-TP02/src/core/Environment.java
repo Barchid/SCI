@@ -1,11 +1,8 @@
-package environment;
-
-import agent.Particle;
-import utils.AppConfig;
+package core;
 
 public class Environment {
 	private AppConfig appConfig;
-	private Particle[][] grid;
+	private Agent[][] grid;
 
 	public Environment(AppConfig appConfig) {
 		super();
@@ -20,7 +17,7 @@ public class Environment {
 	 * @return the particle located in the specified coordinates (x,y) or null if no
 	 *         particle found
 	 */
-	public Particle getCell(int x, int y) {
+	public Agent getCell(int x, int y) {
 		return this.grid[x][y];
 	}
 
@@ -31,7 +28,7 @@ public class Environment {
 	 * @param x
 	 * @param y
 	 */
-	public void moveParticle(Particle particle, int x, int y) {
+	public void moveParticle(Agent particle, int x, int y) {
 		this.grid[particle.getPosX()][particle.getPosY()] = null;
 		this.grid[x][y] = particle;
 	}
@@ -68,7 +65,7 @@ public class Environment {
 		return y < 0 || y >= this.grid[0].length;
 	}
 
-	public void setGrid(Particle[][] grid) {
+	public void setGrid(Agent[][] grid) {
 		this.grid = grid;
 	}
 

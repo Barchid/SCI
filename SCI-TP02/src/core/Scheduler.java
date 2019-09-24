@@ -1,14 +1,10 @@
-package scheduler;
+package core;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Observable;
-
-import agent.Particle;
-import environment.Environment;
-import utils.AppConfig;
 
 /**
  * 
@@ -18,23 +14,26 @@ import utils.AppConfig;
  *         organize the agents' actions
  */
 @SuppressWarnings("deprecation")
-public class Scheduler extends Observable {
-	private AppConfig appConfig;
-	private Environment environment;
-	private List<Particle> agents;
+public abstract class Scheduler extends Observable {
+	protected AppConfig appConfig;
+	protected Environment environment;
+	protected List<Agent> agents;
 
 	public Scheduler(AppConfig appConfig, Environment environment) {
 		super();
 		this.appConfig = appConfig;
 		this.environment = environment;
-		this.agents = new ArrayList<Particle>(this.appConfig.getNbParticles());
+		this.agents = new ArrayList<Agent>(this.appConfig.getNbParticles());
 	}
 
 	/**
 	 * Runs the simulation of the multi agent system
 	 */
 	public void run() throws Exception {
-
+		this.setChanged();
+		this.notifyObservers();
+		// sleep for delay
+		Thread.sleep(this.appConfig.getDelay());
 		for (int i = 0; this.appConfig.getNbTicks() == 0 || i < this.appConfig.getNbTicks(); i++) {
 			int nbCollisions = 0;
 			// Depending on the selected scheduling
@@ -55,13 +54,19 @@ public class Scheduler extends Observable {
 			this.notifyObservers();
 
 			if (this.appConfig.hasTrace()) {
-				System.out.println("Tick;" + nbCollisions);
-				this.agents.forEach((Particle p) -> System.out.println(
-						"Agent;" + p.getPosX() + ";" + p.getPosY() + ";" + p.getPasX() + ";" + p.getPasY() + ";"));
+				this.printStats(nbCollisions);
 			}
 			// sleep for delay
 			Thread.sleep(this.appConfig.getDelay());
 		}
+	}
+
+	/**
+	 * Prints the stats to get a trace
+	 * @param nbCollisions
+	 */
+	public void printStats(int nbCollisions) {
+		System.out.println("Tick;" + nbCollisions);
 	}
 
 	/**
@@ -71,7 +76,7 @@ public class Scheduler extends Observable {
 	 */
 	private int fairTurn() {
 		int nbCollisions = 0;
-		for (Particle particle : this.agents) {
+		for (Agent particle : this.agents) {
 			particle.decide();
 			if (particle.getColor() == Color.RED) {
 				nbCollisions++;
@@ -89,7 +94,7 @@ public class Scheduler extends Observable {
 	 */
 	private int randomTurn() {
 		int nbCollisions = 0;
-		for (Particle particle : this.agents) {
+		for (Agent particle : this.agents) {
 			particle.decide();
 			if (particle.getColor() == Color.RED) {
 				nbCollisions++;
@@ -105,7 +110,7 @@ public class Scheduler extends Observable {
 	 */
 	private int sequentialTurn() {
 		int nbCollisions = 0;
-		for (Particle particle : this.agents) {
+		for (Agent particle : this.agents) {
 			particle.decide();
 			if (particle.getColor() == Color.RED) {
 				nbCollisions++;
@@ -120,7 +125,7 @@ public class Scheduler extends Observable {
 	 * AppConfig's seed
 	 */
 	public void initialize() {
-		Particle[][] grid = new Particle[this.appConfig.getGridSizeX()][this.appConfig.getGridSizeY()];
+		Agent[][] grid = new Agent[this.appConfig.getGridSizeX()][this.appConfig.getGridSizeY()];
 
 		this.makeDistribution(grid);
 		this.environment.setGrid(grid);
@@ -129,7 +134,7 @@ public class Scheduler extends Observable {
 	/**
 	 * Generates all the particles and place them in the grid
 	 */
-	private void makeDistribution(Particle[][] grid) {
+	private void makeDistribution(Agent[][] grid) {
 		for (int i = 0; i < this.appConfig.getNbParticles(); i++) {
 			int posX = 0;
 			int posY = 0;
@@ -150,8 +155,10 @@ public class Scheduler extends Observable {
 				posY = this.appConfig.getRandom().nextInt(this.appConfig.getGridSizeY());
 			} while (grid[posX][posY] != null);
 
-			grid[posX][posY] = new Particle(posX, posY, pasX, pasY, this.environment);
+			grid[posX][posY] = this.createAgent(posX, posY, pasX, pasY);
 			this.agents.add(grid[posX][posY]);
 		}
 	}
+	
+	protected abstract Agent createAgent(int posX, int posY, int pasX, int pasY);
 }

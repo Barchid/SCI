@@ -1,14 +1,10 @@
-package view;
+package core;
 
 import java.awt.Dimension;
 import java.util.Observable;
 import java.util.Observer;
 
 import javax.swing.JFrame;
-
-import environment.Environment;
-import ui.SimulationPanel;
-import utils.AppConfig;
 
 /**
  * 
@@ -44,5 +40,4 @@ public class View implements Observer {
 	public void update(Observable o, Object arg) {
 		this.simulationPanel.repaint();
 	}
-
 }

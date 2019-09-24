@@ -1,13 +1,9 @@
-package ui;
+package core;
 
 import java.awt.Color;
 import java.awt.Graphics;
 
 import javax.swing.JPanel;
-
-import agent.Particle;
-import environment.Environment;
-import utils.AppConfig;
 
 /**
  * 
@@ -44,29 +40,12 @@ public class SimulationPanel extends JPanel {
 					g.drawRect(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
 				}
 
-				Particle particle = this.environment.getCell(x, y);
+				Agent particle = this.environment.getCell(x, y);
 				if (particle != null) {
 					g.setColor(particle.getColor());
 					g.fillRect(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
-
-					g.setColor(Color.BLUE);
-					if (particle.getPasX() == -1) {
-					}
-
-					if (particle.getPasX() == 1) {
-
-					}
-
-					if (particle.getPasY() == -1) {
-
-					}
-
-					if (particle.getPasY() == 1) {
-
-					}
 				}
 			}
 		}
 	}
-
 }

@@ -1,9 +1,9 @@
-package main;
+package particles;
 
-import environment.Environment;
-import scheduler.Scheduler;
-import utils.AppConfig;
-import view.View;
+import core.AppConfig;
+import core.Environment;
+import core.Scheduler;
+import core.View;
 
 /**
  * 
@@ -15,10 +15,10 @@ public class Main {
 
 	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws Exception {
-		String propertiesPath = args.length > 0 ? args[0] : "config.properties";
+		String propertiesPath = args.length > 0 ? args[0] : "particles.properties";
 		AppConfig appConfig = new AppConfig(propertiesPath);
 		Environment environment = new Environment(appConfig);
-		Scheduler scheduler = new Scheduler(appConfig, environment);
+		Scheduler scheduler = new ParticleScheduler(appConfig, environment);
 		scheduler.initialize();
 		View view = new View(environment, appConfig);
 		scheduler.addObserver(view);
