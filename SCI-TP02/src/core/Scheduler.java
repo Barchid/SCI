@@ -14,12 +14,13 @@ import java.util.Observable;
  *         organize the agents' actions
  */
 @SuppressWarnings("deprecation")
-public abstract class Scheduler extends Observable {
-	protected AppConfig appConfig;
-	protected Environment environment;
+public abstract class Scheduler<T extends AppConfig, W extends Environment> extends Observable {
+	protected T appConfig;
+	protected W environment;
+
 	protected List<Agent> agents;
 
-	public Scheduler(AppConfig appConfig, Environment environment) {
+	public Scheduler(T appConfig, W environment) {
 		super();
 		this.appConfig = appConfig;
 		this.environment = environment;
@@ -63,6 +64,7 @@ public abstract class Scheduler extends Observable {
 
 	/**
 	 * Prints the stats to get a trace
+	 * 
 	 * @param nbCollisions
 	 */
 	public void printStats(int nbCollisions) {
@@ -74,7 +76,7 @@ public abstract class Scheduler extends Observable {
 	 * 
 	 * @return the number of collisions that happened in the turn
 	 */
-	private int fairTurn() {
+	protected int fairTurn() {
 		int nbCollisions = 0;
 		for (Agent particle : this.agents) {
 			particle.decide();
@@ -92,7 +94,7 @@ public abstract class Scheduler extends Observable {
 	 * 
 	 * @return the number of collisions that occurs in the turn
 	 */
-	private int randomTurn() {
+	protected int randomTurn() {
 		int nbCollisions = 0;
 		for (Agent particle : this.agents) {
 			particle.decide();
@@ -108,7 +110,7 @@ public abstract class Scheduler extends Observable {
 	 * 
 	 * @return the number of collisions that occurs in the turn
 	 */
-	private int sequentialTurn() {
+	protected int sequentialTurn() {
 		int nbCollisions = 0;
 		for (Agent particle : this.agents) {
 			particle.decide();
@@ -134,31 +136,5 @@ public abstract class Scheduler extends Observable {
 	/**
 	 * Generates all the particles and place them in the grid
 	 */
-	private void makeDistribution(Agent[][] grid) {
-		for (int i = 0; i < this.appConfig.getNbParticles(); i++) {
-			int posX = 0;
-			int posY = 0;
-			int pasX = 0;
-			int pasY = 0;
-
-			// Chose a step of progression to make the particle move (at least, one value
-			// has to be non nul
-			while (pasX == 0 && pasY == 0) {
-				pasX = this.appConfig.getRandom().nextInt(3) - 1; // number between -1 and 1
-				pasY = this.appConfig.getRandom().nextInt(3) - 1;
-			}
-
-			// Find a random (x,y) coordinates that are not used by another particle
-			do {
-				// position distribution
-				posX = this.appConfig.getRandom().nextInt(this.appConfig.getGridSizeX());
-				posY = this.appConfig.getRandom().nextInt(this.appConfig.getGridSizeY());
-			} while (grid[posX][posY] != null);
-
-			grid[posX][posY] = this.createAgent(posX, posY, pasX, pasY);
-			this.agents.add(grid[posX][posY]);
-		}
-	}
-	
-	protected abstract Agent createAgent(int posX, int posY, int pasX, int pasY);
+	protected abstract void makeDistribution(Agent[][] grid);
 }

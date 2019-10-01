@@ -12,9 +12,13 @@ import core.Environment;
  *         Only Agent in the bouncing MAS
  */
 public class Particle extends Agent {
+	protected int pasX; // current X direction of particle
+	protected int pasY; // current Y direction of particle
 
 	public Particle(int posX, int posY, int pasX, int pasY, Environment environment) {
-		super(posX, posY, pasX, pasY, environment);
+		super(posX, posY, environment);
+		this.pasX = pasX;
+		this.pasY = pasY;
 		this.setColor(Color.BLACK);
 	}
 
@@ -46,7 +50,7 @@ public class Particle extends Agent {
 	 */
 	private void moveNoCollision(int x, int y) {
 		this.color = Color.BLACK; // black
-		this.environment.moveParticle(this, x, y);
+		this.environment.moveAgent(this, x, y);
 		this.posX = x;
 		this.posY = y;
 	}
@@ -92,13 +96,13 @@ public class Particle extends Agent {
 				newX = 0;
 			}
 			if (y < 0) {
-				newY = this.environment.getHeigt() - 1;
+				newY = this.environment.getHeight() - 1;
 			}
-			if (y > this.environment.getHeigt() - 1) {
+			if (y > this.environment.getHeight() - 1) {
 				newY = 0;
 			}
 
-			this.environment.moveParticle(this, newX, newY);
+			this.environment.moveAgent(this, newX, newY);
 			this.posX = newX;
 			this.posY = newY;
 		}
@@ -115,10 +119,26 @@ public class Particle extends Agent {
 	 * 
 	 * @param particle
 	 */
-	public void reactToCollision(Agent particle) {
+	public void reactToCollision(Particle particle) {
 		this.color = Color.RED; // red
 		// exchange directions
 		this.pasX = particle.getPasX();
 		this.pasY = particle.getPasY();
+	}
+
+	public int getPasX() {
+		return pasX;
+	}
+
+	public void setPasX(int pasX) {
+		this.pasX = pasX;
+	}
+
+	public int getPasY() {
+		return pasY;
+	}
+
+	public void setPasY(int pasY) {
+		this.pasY = pasY;
 	}
 }

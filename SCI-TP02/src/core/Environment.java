@@ -24,13 +24,33 @@ public class Environment {
 	/**
 	 * Moves the specified particle in the new coordinates (x,y) in parameter
 	 * 
-	 * @param particle
+	 * @param agent
 	 * @param x
 	 * @param y
 	 */
-	public void moveParticle(Agent particle, int x, int y) {
-		this.grid[particle.getPosX()][particle.getPosY()] = null;
-		this.grid[x][y] = particle;
+	public void moveAgent(Agent agent, int x, int y) {
+		this.grid[agent.getPosX()][agent.getPosY()] = null;
+		this.grid[x][y] = agent;
+	}
+
+	/**
+	 * Adds the specified agent in the coordinates (x,y) in parameter
+	 * 
+	 * @param agent
+	 * @param x
+	 * @param y
+	 */
+	public void addAgent(Agent agent, int x, int y) {
+		this.grid[x][y] = agent;
+	}
+	
+	/**
+	 * Removes the agent located in the (x,y) coordinates
+	 * @param x
+	 * @param y
+	 */
+	public void removeAgent(int x, int y) {
+		this.grid[x][y] = null;
 	}
 
 	/**
@@ -73,7 +93,7 @@ public class Environment {
 		return this.grid.length;
 	}
 
-	public int getHeigt() {
+	public int getHeight() {
 		return this.grid[0].length;
 	}
 

@@ -34,7 +34,7 @@ public class SimulationPanel extends JPanel {
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		for (int x = 0; x < this.environment.getWidth(); x++) {
-			for (int y = 0; y < this.environment.getHeigt(); y++) {
+			for (int y = 0; y < this.environment.getHeight(); y++) {
 				if (this.appConfig.isGrid()) {
 					g.setColor(Color.BLACK);
 					g.drawRect(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
@@ -43,7 +43,7 @@ public class SimulationPanel extends JPanel {
 				Agent particle = this.environment.getCell(x, y);
 				if (particle != null) {
 					g.setColor(particle.getColor());
-					g.fillRect(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
+					g.fillOval(x * this.cellSide, y * this.cellSide, this.cellSide, this.cellSide);
 				}
 			}
 		}

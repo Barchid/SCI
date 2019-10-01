@@ -14,7 +14,9 @@ import java.util.Random;
  *         the application (contained in a Properties file)
  */
 public class AppConfig {
-	private boolean isTorus;
+	protected Properties properties;
+	private boolean isTorus; // flag that indicates whether the environment is a torus or a limited
+								// square/rectangle
 	private int gridSizeX; // number of cells for the Environment
 	private int gridSizeY; // number of cells for the Environment
 	private int boxSize; // size of a cell's side in pixel
@@ -36,23 +38,23 @@ public class AppConfig {
 
 	public AppConfig(String propertiesPath) throws Exception {
 		try (InputStream file = new FileInputStream(propertiesPath)) {
-			Properties properties = new Properties();
-			properties.load(file);
-
-			this.gridSizeX = Integer.parseInt(properties.getProperty("gridSizeX"));
-			this.gridSizeY = Integer.parseInt(properties.getProperty("gridSizeY"));
-			this.boxSize = Integer.parseInt(properties.getProperty("boxSize"));
-			this.delay = Integer.parseInt(properties.getProperty("delay"));
-			this.scheduling = Integer.parseInt(properties.getProperty("scheduling"));
-			this.seed = Integer.parseInt(properties.getProperty("seed"));
-			this.nbParticles = Integer.parseInt(properties.getProperty("nbParticles"));
-			this.nbTicks = Integer.parseInt(properties.getProperty("nbTicks"));
-			this.isGrid = Boolean.parseBoolean(properties.getProperty("isGrid"));
-			this.isTorus = Boolean.parseBoolean(properties.getProperty("isTorus"));
-			this.hasTrace = Boolean.parseBoolean(properties.getProperty("hasTrace"));
+			this.properties = new Properties();
+			this.properties.load(file);
 		} catch (IOException ex) {
 			throw new Exception("Error while reading the properties file. Cannot launch the Application.");
 		}
+
+		this.gridSizeX = Integer.parseInt(this.properties.getProperty("gridSizeX"));
+		this.gridSizeY = Integer.parseInt(this.properties.getProperty("gridSizeY"));
+		this.boxSize = Integer.parseInt(this.properties.getProperty("boxSize"));
+		this.delay = Integer.parseInt(this.properties.getProperty("delay"));
+		this.scheduling = Integer.parseInt(this.properties.getProperty("scheduling"));
+		this.seed = Integer.parseInt(this.properties.getProperty("seed"));
+		this.nbParticles = Integer.parseInt(this.properties.getProperty("nbParticles"));
+		this.nbTicks = Integer.parseInt(this.properties.getProperty("nbTicks"));
+		this.isGrid = Boolean.parseBoolean(this.properties.getProperty("isGrid"));
+		this.isTorus = Boolean.parseBoolean(this.properties.getProperty("isTorus"));
+		this.hasTrace = Boolean.parseBoolean(this.properties.getProperty("hasTrace"));
 
 		if (this.seed == 0) {
 			this.random = new Random();
