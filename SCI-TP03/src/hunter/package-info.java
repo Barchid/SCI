@@ -1,0 +1,4 @@
+/**
+ * Avatar game
+ */
+package hunter;
