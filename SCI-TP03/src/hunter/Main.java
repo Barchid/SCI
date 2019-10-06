@@ -1,7 +1,6 @@
 package hunter;
 
 import core.Environment;
-import core.View;
 
 public class Main {
 	@SuppressWarnings("deprecation")

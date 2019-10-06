@@ -32,21 +32,56 @@ public class Dijkstra {
 
 		// WHILE [there is still someone to copute distance]
 		while (!frontier.isEmpty()) {
-			Point current = frontier.poll();
+			Point current = frontier.removeFirst();
 			List<Point> neighborhood = this.getNeighborhood(current);
 			for (Point neighbor : neighborhood) {
 				if (!this.distances.containsKey(neighbor)) {
-					frontier.push(neighbor);
+					frontier.addLast(neighbor);
 					this.distances.put(neighbor, 1 + this.distances.get(current));
 				}
 			}
+//			this.dumpDistanceMap();
+//			System.out.println("\n\n");
 		}
+	}
+
+	/**
+	 * Used only for debugging purpose
+	 */
+	@SuppressWarnings("unused")
+	private void dumpDistanceMap() {
+		StringBuilder sb = new StringBuilder();
+		for (int x = 0; x < this.environment.getWidth(); x++) {
+			sb.append("\n");
+			for (int y = 0; y < this.environment.getHeight(); y++) {
+				sb.append("|");
+				Point p = new Point(x, y);
+				if (this.distances.containsKey(p)) {
+					int n = this.distances.get(p);
+					if (n % 100 != n) {
+						sb.append(n);
+					} else if (n % 10 != n) {
+						sb.append(" " + n);
+					} else {
+						sb.append("  " + n);
+					}
+				} else {
+					sb.append("  X");
+				}
+			}
+		}
+
+		System.out.println(sb.toString());
 	}
 
 	public List<Point> getNeighborhood(Point point) {
 		List<Point> neighborhood = new ArrayList<Point>();
 		for (int i = -1; i <= 1; i++) {
 			for (int j = -1; j <= 1; j++) {
+				// disable diagonals
+				if(i != 0 && j != 0) {
+					continue;
+				}
 				int x = point.x + i;
 				int y = point.y + j;
 
@@ -87,10 +122,44 @@ public class Dijkstra {
 		if (neighborhood.isEmpty()) {
 			return null;
 		}
-		
+
 		Point best = neighborhood.get(0);
 		for (Point neighbor : neighborhood) {
-			if (this.distances.get(best) > this.distances.get(neighbor)) {
+			if (this.distances.get(neighbor) == null) {
+				continue;
+			}
+
+			if (this.distances.get(best) == null) {
+				best = neighbor;
+				continue;
+			}
+			
+			if (this.distances.get(best).intValue() > this.distances.get(neighbor).intValue()) {
+				best = neighbor;
+			}
+		}
+
+		return best;
+	}
+	
+	public Point getWorstNeighbor(Point point) {
+		List<Point> neighborhood = this.getNeighborhood(point);
+		if (neighborhood.isEmpty()) {
+			return null;
+		}
+
+		Point best = neighborhood.get(0);
+		for (Point neighbor : neighborhood) {
+			if (this.distances.get(neighbor) == null) {
+				continue;
+			}
+
+			if (this.distances.get(best) == null) {
+				best = neighbor;
+				continue;
+			}
+			
+			if (this.distances.get(best).intValue() < this.distances.get(neighbor).intValue()) {
 				best = neighbor;
 			}
 		}
