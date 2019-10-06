@@ -131,4 +131,12 @@ public class Avatar extends Agent implements KeyListener {
 	public int getInvincibilityCount() {
 		return invincibilityCount;
 	}
+	
+	public void setTick(int tick) {
+		this.tick = tick;
+	}
+	
+	public void setInvincibilityCount(int invincibilityCount) {
+		this.invincibilityCount = invincibilityCount;
+	}
 }

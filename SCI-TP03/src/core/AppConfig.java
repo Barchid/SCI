@@ -110,4 +110,8 @@ public class AppConfig {
 	public Random getRandom() {
 		return random;
 	}
+	
+	public void setDelay(int delay) {
+		this.delay = delay;
+	}
 }

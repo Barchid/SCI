@@ -16,12 +16,15 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 	private Dijkstra dijkstra;
 	private int defenderCount;
 	private boolean isReloading;
+	private Avatar avatar;
+	private boolean isDone;
 
 	public HunterScheduler(HunterAppConfig appConfig, Environment environment) {
 		super(appConfig, environment);
 		this.dijkstra = new Dijkstra(this.environment);
 		this.defenderCount = 0;
 		this.isReloading = false;
+		this.isDone = false;
 	}
 
 	@Override
@@ -63,6 +66,10 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 			this.setChanged();
 			this.notifyObservers();
 
+			if (this.isReloading) {
+				break;
+			}
+
 			if (this.appConfig.hasTrace()) {
 
 			}
@@ -70,8 +77,16 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 			Thread.sleep(this.appConfig.getDelay());
 
 			if (nbCollisions == -1) {
+				this.isDone = true;
 				break;
 			}
+		}
+
+		if (this.isReloading) {
+			this.agents.clear();
+			this.isReloading = false;
+			this.initialize();
+			this.run();
 		}
 	}
 
@@ -148,9 +163,16 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 	}
 
 	private void createAvatar(Agent[][] grid) {
-		int[] freePlace = this.findFreePlace(grid);
-		Avatar avatar = new Avatar(freePlace[0], freePlace[1], this.environment, this.appConfig, this.dijkstra);
-		grid[freePlace[0]][freePlace[1]] = avatar;
+		int[] coord = this.findFreePlace(grid);
+		if (this.avatar == null) {
+			this.avatar = new Avatar(coord[0], coord[1], this.environment, this.appConfig, this.dijkstra);
+		} else {
+			this.avatar.setPosX(coord[0]);
+			this.avatar.setPosY(coord[1]);
+			this.avatar.setTick(0);
+			this.avatar.setInvincibilityCount(0);
+		}
+		grid[coord[0]][coord[1]] = avatar;
 		this.agents.add(avatar);
 	}
 
@@ -233,7 +255,7 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 		int newSpeed;
 		switch (e.getKeyCode()) {
 		case KeyEvent.VK_SPACE:
-
+			this.isReloading = true;
 			break;
 		case KeyEvent.VK_O: // accelerate hunter
 			newSpeed = this.appConfig.getSpeedHunter() == 1 ? this.appConfig.getSpeedHunter()
@@ -252,6 +274,14 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 		case KeyEvent.VK_M: // decelerate avatar
 			newSpeed = this.appConfig.getSpeedAvatar() + 1;
 			this.appConfig.setSpeedAvatar(newSpeed);
+			break;
+		case KeyEvent.VK_U: // accelerate simulation
+			newSpeed = this.appConfig.getDelay() <= 40 ? 40 : this.appConfig.getDelay() - 10;
+			this.appConfig.setDelay(newSpeed);
+			break;
+		case KeyEvent.VK_I: // decelerate simulation
+			newSpeed = this.appConfig.getDelay() + 10;
+			this.appConfig.setDelay(newSpeed);
 			break;
 		}
 	}
