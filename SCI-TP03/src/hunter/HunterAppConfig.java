@@ -49,4 +49,12 @@ public class HunterAppConfig extends AppConfig {
 	public int getNbDefenders() {
 		return nbDefenders;
 	}
+
+	public void setSpeedHunter(int speedHunter) {
+		this.speedHunter = speedHunter;
+	}
+
+	public void setSpeedAvatar(int speedAvatar) {
+		this.speedAvatar = speedAvatar;
+	}
 }

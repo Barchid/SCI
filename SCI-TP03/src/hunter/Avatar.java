@@ -12,7 +12,6 @@ public class Avatar extends Agent implements KeyListener {
 	private int dirY;
 	private HunterAppConfig appConfig;
 	private Dijkstra dijkstra;
-	private int speed;
 	private int tick;
 	private int invincibilityCount;
 
@@ -21,7 +20,6 @@ public class Avatar extends Agent implements KeyListener {
 		this.color = Color.YELLOW;
 		this.appConfig = appConfig;
 		this.dijkstra = dijkstra;
-		this.speed = this.appConfig.getSpeedAvatar();
 		this.tick = 0;
 		this.invincibilityCount = 0;
 	}
@@ -35,8 +33,8 @@ public class Avatar extends Agent implements KeyListener {
 		} else {
 			this.color = Color.ORANGE;
 		}
-		
-		if (this.tick % this.speed != 0) {
+
+		if (this.tick % this.appConfig.getSpeedAvatar() != 0) {
 			return;
 		}
 

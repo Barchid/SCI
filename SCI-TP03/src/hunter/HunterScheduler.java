@@ -1,6 +1,8 @@
 package hunter;
 
 import java.awt.Color;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,14 +12,16 @@ import core.AppConfig;
 import core.Environment;
 import core.Scheduler;
 
-public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> {
+public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> implements KeyListener {
 	private Dijkstra dijkstra;
 	private int defenderCount;
+	private boolean isReloading;
 
 	public HunterScheduler(HunterAppConfig appConfig, Environment environment) {
 		super(appConfig, environment);
 		this.dijkstra = new Dijkstra(this.environment);
 		this.defenderCount = 0;
+		this.isReloading = false;
 	}
 
 	@Override
@@ -55,6 +59,7 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> {
 
 			this.purgeCorpses();
 			this.activateWinner();
+
 			this.setChanged();
 			this.notifyObservers();
 
@@ -215,5 +220,45 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> {
 		} while (grid[posX][posY] != null);
 
 		return new int[] { posX, posY };
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		int newSpeed;
+		switch (e.getKeyCode()) {
+		case KeyEvent.VK_SPACE:
+
+			break;
+		case KeyEvent.VK_O: // accelerate hunter
+			newSpeed = this.appConfig.getSpeedHunter() == 1 ? this.appConfig.getSpeedHunter()
+					: this.appConfig.getSpeedHunter() - 1;
+			this.appConfig.setSpeedHunter(newSpeed);
+			break;
+		case KeyEvent.VK_P: // decelerate hunter
+			newSpeed = this.appConfig.getSpeedHunter() + 1;
+			this.appConfig.setSpeedHunter(newSpeed);
+			break;
+		case KeyEvent.VK_L: // accelerate avatar
+			newSpeed = this.appConfig.getSpeedAvatar() == 1 ? this.appConfig.getSpeedAvatar()
+					: this.appConfig.getSpeedAvatar() - 1;
+			this.appConfig.setSpeedAvatar(newSpeed);
+			break;
+		case KeyEvent.VK_M: // decelerate avatar
+			newSpeed = this.appConfig.getSpeedAvatar() + 1;
+			this.appConfig.setSpeedAvatar(newSpeed);
+			break;
+		}
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		// TODO Auto-generated method stub
+
 	}
 }

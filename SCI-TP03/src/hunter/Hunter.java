@@ -8,16 +8,16 @@ import core.Environment;
 
 public class Hunter extends Agent {
 	private Dijkstra dijkstra;
-	private int speed;
 	private int tick;
 	private Avatar avatar;
-
+	private HunterAppConfig appConfig;
+	
 	public Hunter(int posX, int posY, Environment environment, Dijkstra dijkstra, HunterAppConfig appConfig,
 			Avatar avatar) {
 		super(posX, posY, environment);
 		this.dijkstra = dijkstra;
 		this.color = Color.RED;
-		this.speed = appConfig.getSpeedHunter();
+		this.appConfig = appConfig;
 		this.tick = 0;
 		this.avatar = avatar;
 	}
@@ -25,7 +25,7 @@ public class Hunter extends Agent {
 	@Override
 	public void decide() {
 		this.tick++;
-		if (this.tick % this.speed != 0) {
+		if (this.tick % this.appConfig.getSpeedHunter() != 0) {
 			return;
 		}
 

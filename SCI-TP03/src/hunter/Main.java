@@ -10,7 +10,7 @@ public class Main {
 		Environment environment = new Environment(appConfig);
 		HunterScheduler scheduler = new HunterScheduler(appConfig, environment);
 		scheduler.initialize();
-		HunterView view = new HunterView(environment, appConfig, scheduler.getAvatar());
+		HunterView view = new HunterView(environment, appConfig, scheduler.getAvatar(), scheduler);
 		scheduler.addObserver(view);
 		scheduler.run();
 	}
