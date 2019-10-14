@@ -12,19 +12,17 @@ import core.AppConfig;
 import core.Environment;
 import core.Scheduler;
 
-public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> implements KeyListener {
+public class HunterScheduler extends Scheduler<HunterAppConfig> implements KeyListener {
 	private Dijkstra dijkstra;
 	private int defenderCount;
 	private boolean isReloading;
 	private Avatar avatar;
-	private boolean isDone;
 
 	public HunterScheduler(HunterAppConfig appConfig, Environment environment) {
 		super(appConfig, environment);
 		this.dijkstra = new Dijkstra(this.environment);
 		this.defenderCount = 0;
 		this.isReloading = false;
-		this.isDone = false;
 	}
 
 	@Override
@@ -77,7 +75,6 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 			Thread.sleep(this.appConfig.getDelay());
 
 			if (nbCollisions == -1) {
-				this.isDone = true;
 				break;
 			}
 		}
@@ -288,7 +285,5 @@ public class HunterScheduler extends Scheduler<HunterAppConfig, Environment> imp
 
 	@Override
 	public void keyReleased(KeyEvent e) {
-		// TODO Auto-generated method stub
-
 	}
 }

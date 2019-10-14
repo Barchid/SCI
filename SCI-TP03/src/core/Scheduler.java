@@ -14,13 +14,13 @@ import java.util.Observable;
  *         organize the agents' actions
  */
 @SuppressWarnings("deprecation")
-public abstract class Scheduler<T extends AppConfig, W extends Environment> extends Observable {
+public abstract class Scheduler<T extends AppConfig> extends Observable {
 	protected T appConfig;
-	protected W environment;
+	protected Environment environment;
 
 	protected List<Agent> agents;
 
-	public Scheduler(T appConfig, W environment) {
+	public Scheduler(T appConfig, Environment environment) {
 		super();
 		this.appConfig = appConfig;
 		this.environment = environment;

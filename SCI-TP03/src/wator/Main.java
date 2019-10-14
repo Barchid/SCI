@@ -18,7 +18,8 @@ public class Main {
 		Environment environment = new Environment(appConfig);
 		WatorScheduler scheduler = new WatorScheduler(appConfig, environment);
 		scheduler.initialize();
-		View view = new View(environment, appConfig);
+		WatorSimulationPanel panel = new WatorSimulationPanel(appConfig, environment);
+		View view = new View(environment, appConfig, panel);
 		scheduler.addObserver(view);
 		scheduler.run();
 	}

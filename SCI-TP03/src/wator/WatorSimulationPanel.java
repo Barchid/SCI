@@ -1,24 +1,23 @@
-package core;
+package wator;
 
 import java.awt.Color;
 import java.awt.Graphics;
 
 import javax.swing.JPanel;
 
-/**
- * 
- * @author samib
- *
- *         Class that represents the grid that displays the state of the current
- *         simulation in the Multi agent system
- */
-public class SimulationPanel extends JPanel {
-	private static final long serialVersionUID = 620784715181712323L;
-	private AppConfig appConfig;
-	private int cellSide;
-	private Environment environment;
+import core.Agent;
+import core.AppConfig;
+import core.Environment;
 
-	public SimulationPanel(AppConfig appConfig, Environment environment) {
+public class WatorSimulationPanel extends JPanel {
+
+	private static final long serialVersionUID = -2650318584384164263L;
+
+	protected AppConfig appConfig;
+	protected int cellSide;
+	protected Environment environment;
+
+	public WatorSimulationPanel(AppConfig appConfig, Environment environment) {
 		super();
 		this.appConfig = appConfig;
 		this.environment = environment;

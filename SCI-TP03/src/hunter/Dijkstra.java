@@ -2,7 +2,6 @@ package hunter;
 
 import java.awt.Point;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -79,7 +78,7 @@ public class Dijkstra {
 		for (int i = -1; i <= 1; i++) {
 			for (int j = -1; j <= 1; j++) {
 				// disable diagonals
-				if(i != 0 && j != 0) {
+				if (i != 0 && j != 0) {
 					continue;
 				}
 				int x = point.x + i;
@@ -133,7 +132,7 @@ public class Dijkstra {
 				best = neighbor;
 				continue;
 			}
-			
+
 			if (this.distances.get(best).intValue() > this.distances.get(neighbor).intValue()) {
 				best = neighbor;
 			}
@@ -141,7 +140,7 @@ public class Dijkstra {
 
 		return best;
 	}
-	
+
 	public Point getWorstNeighbor(Point point) {
 		List<Point> neighborhood = this.getNeighborhood(point);
 		if (neighborhood.isEmpty()) {
@@ -158,7 +157,7 @@ public class Dijkstra {
 				best = neighbor;
 				continue;
 			}
-			
+
 			if (this.distances.get(best).intValue() < this.distances.get(neighbor).intValue()) {
 				best = neighbor;
 			}

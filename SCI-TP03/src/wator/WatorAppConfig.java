@@ -12,9 +12,9 @@ public class WatorAppConfig extends AppConfig {
 	
 	// values available for watorbehavior
 	public static final int ONE_ACTION_PER_TICK = 0;
-	public static final int FUCK_AND_MOVE = 1;
-	public static final int FUCK_AND_EAT = 2;
-	public static final int FUCK_EAT_AND_MOVE = 3;
+	public static final int REPRODUCE_AND_MOVE = 1;
+	public static final int REPRODUCE_AND_EAT = 2;
+	public static final int REPRODUCE_EAT_AND_MOVE = 3;
 	
 	public WatorAppConfig(String propertiesPath) throws Exception {
 		super(propertiesPath);

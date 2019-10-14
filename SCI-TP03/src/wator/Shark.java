@@ -23,7 +23,10 @@ public class Shark extends Agent {
 		super(posX, posY, environment);
 		this.appConfig = appConfig;
 		this.breedTime = this.appConfig.getSharkBreedTime();
-		this.starveTime = this.appConfig.getSharkStarveTime();
+		this.starveTime = this.appConfig.getRandom().nextInt(this.appConfig.getSharkStarveTime()) + 1; // starve time
+																										// between 1 and
+																										// max starve
+																										// time
 		this.color = Color.RED;
 		this.scheduler = scheduler;
 	}
@@ -35,14 +38,14 @@ public class Shark extends Agent {
 		case WatorAppConfig.ONE_ACTION_PER_TICK:
 			this.decideOneAction();
 			break;
-		case WatorAppConfig.FUCK_AND_MOVE:
-			this.decideFuckAndMove();
+		case WatorAppConfig.REPRODUCE_AND_MOVE:
+			this.decideReproduceAndMove();
 			break;
-		case WatorAppConfig.FUCK_AND_EAT:
+		case WatorAppConfig.REPRODUCE_AND_EAT:
 			this.decideFuckAndEat();
 			break;
 		default: // FUCK_EAT_AND_MOVE
-			this.decideFuckEatAndMove();
+			this.decideReproduceEatAndMove();
 			break;
 		}
 	}
@@ -77,7 +80,7 @@ public class Shark extends Agent {
 
 		// IF [shark can fuck]
 		if (this.breedTime == 0) {
-			this.fuck(coordinates[0], coordinates[1]);
+			this.reproduce(coordinates[0], coordinates[1]);
 			return;
 		}
 
@@ -89,7 +92,7 @@ public class Shark extends Agent {
 	/**
 	 * Decide function when the simulation's behavior is FUCK_AND_MOVE
 	 */
-	private void decideFuckAndMove() {
+	private void decideReproduceAndMove() {
 		Fish fish = this.findFishNeighbor();
 		// IF [shark can eat a fish]
 		if (fish != null) {
@@ -123,7 +126,7 @@ public class Shark extends Agent {
 
 		// IF [shark can fuck]
 		if (this.breedTime == 0) {
-			this.fuck(this.getPosX(), this.getPosY());
+			this.reproduce(this.getPosX(), this.getPosY());
 		}
 		// Update breed time if can't fuck
 		else {
@@ -144,7 +147,7 @@ public class Shark extends Agent {
 			this.eat(fish);
 			this.environment.moveAgent(this, fish.getPosX(), fish.getPosY());
 			if (this.breedTime == 0) {
-				this.fuck(this.getPosX(), this.getPosY());
+				this.reproduce(this.getPosX(), this.getPosY());
 			} else {
 				this.breedTime = this.breedTime > 0 ? this.breedTime - 1 : this.breedTime;
 			}
@@ -180,14 +183,14 @@ public class Shark extends Agent {
 	/**
 	 * Decide function with the simulation's behavior is FUCK_EAT_AND_MOVE
 	 */
-	private void decideFuckEatAndMove() {
+	private void decideReproduceEatAndMove() {
 		Fish fish = this.findFishNeighbor();
 		// IF [shark can eat a fish]
 		if (fish != null) {
 			this.eat(fish);
 			this.environment.moveAgent(this, fish.getPosX(), fish.getPosY());
 			if (this.breedTime == 0) {
-				this.fuck(this.getPosX(), this.getPosY());
+				this.reproduce(this.getPosX(), this.getPosY());
 			} else {
 				this.breedTime = this.breedTime > 0 ? this.breedTime - 1 : this.breedTime;
 			}
@@ -217,7 +220,7 @@ public class Shark extends Agent {
 
 		// IF [shark can fuck]
 		if (this.breedTime == 0) {
-			this.fuck(this.getPosX(), this.getPosY());
+			this.reproduce(this.getPosX(), this.getPosY());
 		}
 		// Update breed time if can't fuck
 		else {
@@ -410,7 +413,7 @@ public class Shark extends Agent {
 	 * @param x
 	 * @param y
 	 */
-	private void fuck(int x, int y) {
+	private void reproduce(int x, int y) {
 		Shark son = new Shark(x, y, this.environment, this.appConfig, this.scheduler);
 		son.color = Color.MAGENTA; // MAGENTA when shark is a newborn
 		this.environment.addAgent(son, x, y);

@@ -20,7 +20,8 @@ public class Main {
 		Environment environment = new Environment(appConfig);
 		Scheduler scheduler = new ParticleScheduler(appConfig, environment);
 		scheduler.initialize();
-		View view = new View(environment, appConfig);
+		ParticleSimulationPanel simulationPanel = new ParticleSimulationPanel(appConfig, environment);
+		View view = new View(environment, appConfig, simulationPanel);
 		scheduler.addObserver(view);
 		scheduler.run();
 	}

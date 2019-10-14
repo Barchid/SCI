@@ -1,7 +1,6 @@
 package wator;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import core.Agent;
@@ -16,7 +15,7 @@ import core.Scheduler;
  *         Class that implements the scheduling for a MAS that implements the
  *         bouncing model
  */
-public class WatorScheduler extends Scheduler<WatorAppConfig, Environment> {
+public class WatorScheduler extends Scheduler<WatorAppConfig> {
 	private List<Agent> newBorns; // the list of agents that are born in the current tour
 
 	public WatorScheduler(WatorAppConfig appConfig, Environment environment) {

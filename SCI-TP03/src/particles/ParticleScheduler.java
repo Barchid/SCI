@@ -12,7 +12,7 @@ import core.Scheduler;
  *         Class that implements the scheduling for a MAS that implements the
  *         bouncing model
  */
-public class ParticleScheduler extends Scheduler<AppConfig, Environment> {
+public class ParticleScheduler extends Scheduler<AppConfig> {
 
 	public ParticleScheduler(AppConfig appConfig, Environment environment) {
 		super(appConfig, environment);
