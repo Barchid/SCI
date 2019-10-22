@@ -1,12 +1,18 @@
 ; @author BARCHID Sami
 
 ; breeds
-breed [cars car]
-breed [houses house]
+breed [cars car] ; voitures qui parcourent les routes
+breed [houses house] ; maisons contenant des habitants
+breed [water-towers water-tower] ; château d'eau fournissant de l'eau (water-supply)
+breed [power-stations power-station] ; centrale électrique fournissant de l'elec (elec-supply)
+breed [water-supplies water-supply] ; fourniture d'eau parcourant les routes pour alimenter les maisons dans le besoin
+breed [elec-supplies elec-supply] ; fourniture d'elec parcourant les routes pour alimenter les maisons dans le besoin
 
 ; variables
 houses-own [
   occupation ; nombre d'occupants de la maison
+  elec ; capacité courante en electricité de la maison
+  water ; capacité courante en eau de la maison
 ]
 
 cars-own [
@@ -53,8 +59,38 @@ end
 ; go loop
 to go
   ask cars [car-decide]
+  ask elec-supplies [elec-supply-decide]
+  ask water-supplies [water-supply-decide]
   ask houses [house-decide]
+  ask power-stations [power-station-decide]
+  ask water-towers [water-tower-decide]
   tick
+end
+
+
+
+;########################## AVANCEMENT AU HASARD ##########################
+;##########################################################################
+; Fonction permettant à car, water-supply ou elec-supply d'avancer sur la route
+to advance
+  let f patch-ahead 1
+  let r patch-right-and-ahead 90 1
+  let l patch-left-and-ahead 90 1
+  let dirs (patch-set f r l)  with [pcolor = white]
+
+  ; Déplacement
+  ; SI [je peux avancer quelque part]
+  ifelse any? dirs
+    [ ; Je choisis une direction au hasard
+      move-to one-of dirs
+    ]
+    [ ; je rebrousse chemin (cul de sac oblige)
+      move-to patch-left-and-ahead 180 1
+      left 180
+    ]
+
+  if (patch-here = r) [right 90]
+  if (patch-here = l) [left 90]
 end
 
 
@@ -62,7 +98,7 @@ end
 ;##################################################################################
 ;#################################### CAR #########################################
 ; Initialisation d'une car
-to init-car [new-local]
+to init-car [new-local] ; new-local est la maison par laquel sort la voiture
   set shape "car-rotate"
 
   ; Attribution de la maison de la voiture
@@ -89,28 +125,6 @@ to car-decide
   ]
 end
 
-; Fonction permettant à une voiture d'avancer sur la route
-to advance
-  let f patch-ahead 1
-  let r patch-right-and-ahead 90 1
-  let l patch-left-and-ahead 90 1
-  let dirs (patch-set f r l)  with [pcolor = white]
-
-  ; Déplacement
-  ; SI [je peux avancer quelque part]
-  ifelse any? dirs
-    [ ; Je choisis une direction au hasard
-      move-to one-of dirs
-    ]
-    [ ; je rebrousse chemin (cul de sac oblige)
-      move-to patch-left-and-ahead 180 1
-      left 180
-    ]
-
-  if (patch-here = r) [right 90]
-  if (patch-here = l) [left 90]
-end
-
 ; Fonction appelée quand une voiture arrive devant sa maison (rentre chez lui en gros)
 to car-interact-local
   ask local [set occupation (occupation + 1)]
@@ -126,21 +140,32 @@ to init-house
   set shape "house"
   set size 1
 
+  ; Pour éviter qu'une maison soit grise (car le gris est la couleur d'une house morte)
+  if color = grey [
+    set color blue
+  ]
+
   ; nombre d'habitants de la maison entre 1 et nbOccupations
   set occupation (random (nb-occupation) + 1)
 
+  ; initialiser les capacités en eau et elec
+  set elec elec-max
+  set water water-max
+
+  ; affichage
   if display-occupation [
     set label occupation
   ]
 
-  ; bouger à un endroit juste à côté d'une route
-  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white])]
+  ; bouger à un endroit juste à côté d'une route (personne d'autre dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
 end
 
 to house-decide
-  ; Lancer l'interaction pour les voitures devant moi
-;  ask cars-on neighbors4 [car-interact-house myself]
-
+  ; ne fait rien si la maison est morte (en gris)
+  if color = grey [
+    stop
+  ]
 
   ; chier une car si je peux et si j'en ai le droit
   if occupation > 0 and (random car-frequence) = 0 [
@@ -148,9 +173,127 @@ to house-decide
     set occupation (occupation - 1)
   ]
 
+  ; Consommation d'elec
+  set elec (elec - occupation)
+
+  ; Consommation d'eau
+  set water (water - occupation)
+
+  ; mort si eau ou elec <= 0
+  if water <= 0 or elec <= 0 [
+    house-ko
+  ]
+
   ; mettre à jour le nombre de cars affiché (si demandé)
   if display-occupation [
     set label occupation
+  ]
+end
+
+; fonction de mort d'une maison (pour cause de pénurie d'elec/eau)
+to house-ko
+  set color grey
+  set occupation 0 ; les habitants meurent tous
+  ask cars with [local = myself] [die] ; mort directe des cars
+end
+
+
+
+;##################################################################################
+;#################################### POWER STATION ###############################
+; Initialisation d'une centrale électrique
+to init-power-station
+  set shape "power-station"
+  set size 1
+  ; bouger à un endroit juste à côté d'une route (sans aucune autre installation dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+; Fonction de décision d'une centrale électrique
+to power-station-decide
+  ; chier un elec-supply suivant la fréquence entrée dans le slider
+  if (random elec-frequence) = 0 [
+    hatch-elec-supplies 1 [init-elec-supply myself]
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### WATER TOWER ###############################
+; Initialisation d'un chateau d'eau
+to init-water-tower
+  set shape "water-tower"
+  set size 1
+  ; bouger à un endroit juste à côté d'une route (sans aucune autre installation dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+; Fonction de décision d'un chateau d'eau
+to water-tower-decide
+  ; chier un water-supply suivant la fréquence entrée dans le slider
+  if (random water-frequence) = 0 [
+    hatch-water-supplies 1 [init-water-supply myself]
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### ELEC SUPPLY #################################
+; Initialisation d'un elec supply
+to init-elec-supply [station] ; station est la centrale qui a créé le elec-supply
+  set shape "elec"
+  set size 1
+
+  ; sélectionner morceau de route où le elec-supply se place devant sa centrale
+  let road-available [neighbors4 with [pcolor = white]] of station
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+end
+
+; Fonction de décision d'un elec-supply
+to elec-supply-decide
+  ; avancer
+  advance
+
+  ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
+  let near-houses houses-on neighbors4
+  if any? near-houses with [elec < elec-max and color != grey] [
+    ask one-of near-houses with [elec < elec-max] [set elec elec-max]
+    die ; meurt après le premier rechargement
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### WATER SUPPLY ################################
+; Initialisation d'un water supply
+to init-water-supply [tower] ; tower est le chateau d'eau qui a créé le water-supply
+  set shape "water"
+  set size 1
+
+  ; sélectionner morceau de route où le water-supply se place devant son château d'eau
+  let road-available [neighbors4 with [pcolor = white]] of tower
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+end
+
+; Fonction de décision d'un water-supply
+to water-supply-decide
+  ; avancer
+  advance
+
+  ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
+  let near-houses houses-on neighbors4
+  if any? near-houses with [water < water-max and color != grey] [
+    ask one-of near-houses with [water < water-max] [set water water-max]
+    die ; meurt après le premier rechargement
   ]
 end
 @#$#@#$#@
@@ -222,30 +365,30 @@ SWITCH
 77
 display-occupation
 display-occupation
-0
+1
 1
 -1000
 
 SLIDER
-615
-115
-869
-148
+766
+102
+940
+135
 nb-occupation
 nb-occupation
 0
 100
-51.0
+8.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-299
-113
-471
-146
+767
+141
+939
+174
 nb-houses
 nb-houses
 1
@@ -257,10 +400,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-13
-111
-185
-144
+548
+219
+720
+252
 car-frequence
 car-frequence
 0
@@ -271,25 +414,95 @@ car-frequence
 NIL
 HORIZONTAL
 
-PLOT
-17
-214
-870
-418
-Taux d'occupation des maisons en fonction du temps
-Temps (en tick)
-Occupation des maisons
-0.0
-1000.0
-0.0
+SLIDER
+250
+109
+481
+142
+water-max
+water-max
+10
+1000
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+249
+157
+483
+190
+elec-max
+elec-max
+10
+1000
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+550
+114
+723
+147
+water-frequence
+water-frequence
+1
+100
 10.0
-true
-false
-"" ""
-PENS
-"Résidents dans leur maison" 1.0 0 -955883 true "" "plot sum [occupation] of houses"
-"Population totale" 1.0 0 -13840069 true "" "plot (sum [occupation] of houses + count cars)"
-"Population en mouvement" 1.0 0 -13345367 true "" "plot count cars"
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+549
+165
+723
+198
+elec-frequence
+elec-frequence
+1
+100
+11.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+765
+192
+937
+225
+nb-power-stations
+nb-power-stations
+1
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+762
+237
+934
+270
+nb-water-towers
+nb-water-towers
+1
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -435,6 +648,14 @@ false
 0
 Circle -7500403 true true 90 90 120
 
+elec
+true
+0
+Circle -2674135 true false 0 0 300
+Rectangle -1184463 true false 60 135 255 165
+Polygon -1184463 true false 30 165 90 0 195 0 90 165
+Polygon -1184463 true false 285 135 135 300 135 300 240 135
+
 face happy
 false
 0
@@ -543,6 +764,17 @@ Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
+power-station
+true
+0
+Polygon -7500403 true true 45 255 60 60 90 60 105 255
+Rectangle -7500403 true true 105 165 255 255
+Polygon -16777216 true false 120 165 120 195 180 165 105 165
+Polygon -16777216 true false 180 165 180 195 255 165 180 165
+Rectangle -16777216 true false 120 210 165 225
+Rectangle -16777216 true false 195 210 240 225
+Polygon -6459832 true false 75 45 90 30 120 30 135 15 150 15 135 30 120 45 105 45 90 60 75 45
+
 sheep
 false
 15
@@ -629,6 +861,23 @@ Polygon -10899396 true false 105 90 75 75 55 75 40 89 31 108 39 124 60 105 75 10
 Polygon -10899396 true false 132 85 134 64 107 51 108 17 150 2 192 18 192 52 169 65 172 87
 Polygon -10899396 true false 85 204 60 233 54 254 72 266 85 252 107 210
 Polygon -7500403 true true 119 75 179 75 209 101 224 135 220 225 175 261 128 261 81 224 74 135 88 99
+
+water
+false
+0
+Polygon -13791810 true false 150 0 75 165 225 165
+Circle -13791810 true false 60 105 180
+
+water-tower
+true
+0
+Polygon -7500403 true true 90 75 150 0 210 75
+Rectangle -7500403 true true 75 165 225 180
+Rectangle -7500403 true true 90 90 210 150
+Polygon -7500403 true true 195 180 180 180 225 270 240 270 210 210
+Polygon -7500403 true true 105 180 120 180 75 270 60 270 90 210
+Polygon -7500403 true true 165 165 195 165 120 270 90 270 90 270
+Polygon -7500403 true true 135 165 105 165 180 270 210 270 210 270
 
 wheel
 false
