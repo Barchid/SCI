@@ -134,7 +134,7 @@ to init-house
   ]
 
   ; bouger à un endroit juste à côté d'une route
-  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white])]
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
 end
 
 to house-decide
@@ -235,7 +235,7 @@ nb-occupation
 nb-occupation
 0
 100
-51.0
+69.0
 1
 1
 NIL
@@ -250,7 +250,7 @@ nb-houses
 nb-houses
 1
 100
-1.0
+4.0
 1
 1
 NIL
@@ -265,7 +265,7 @@ car-frequence
 car-frequence
 0
 500
-100.0
+20.0
 10
 1
 NIL

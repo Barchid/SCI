@@ -28,6 +28,12 @@ to setup
   ; Création des houses
   create-houses nb-houses [init-house]
 
+  ; Création des centrales électriques
+  create-power-stations nb-power-stations [init-power-station]
+
+  ; Création des châteaux d'eau
+  create-water-towers n[init-water-tower]
+
   reset-ticks
 end
 
@@ -59,8 +65,11 @@ end
 ; go loop
 to go
   ask cars [car-decide]
-
+  ask elec-supplies [elec-supply-decide]
+  ask water-supplies [water-supply-decide]
   ask houses [house-decide]
+  ask power-stations [power-station-decide]
+  ask water-towers [water-tower-decide]
   tick
 end
 
@@ -648,7 +657,7 @@ Circle -7500403 true true 90 90 120
 elec
 true
 0
-Circle -2674135 true false 0 0 300
+Circle -16777216 true false 0 0 300
 Rectangle -1184463 true false 60 135 255 165
 Polygon -1184463 true false 30 165 90 0 195 0 90 165
 Polygon -1184463 true false 285 135 135 300 135 300 240 135
@@ -860,13 +869,13 @@ Polygon -10899396 true false 85 204 60 233 54 254 72 266 85 252 107 210
 Polygon -7500403 true true 119 75 179 75 209 101 224 135 220 225 175 261 128 261 81 224 74 135 88 99
 
 water
-false
+true
 0
-Polygon -13791810 true false 150 0 75 165 225 165
-Circle -13791810 true false 60 105 180
+Polygon -13791810 true false 150 300 75 135 225 135
+Circle -13791810 true false 60 15 180
 
 water-tower
-true
+false
 0
 Polygon -7500403 true true 90 75 150 0 210 75
 Rectangle -7500403 true true 75 165 225 180
