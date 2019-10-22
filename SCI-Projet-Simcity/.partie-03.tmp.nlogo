@@ -32,7 +32,7 @@ to setup
   create-power-stations nb-power-stations [init-power-station]
 
   ; Création des châteaux d'eau
-  create-water-towers n[init-water-tower]
+  create-water-towers nb-water-towers [init-water-tower]
 
   reset-ticks
 end
@@ -200,6 +200,8 @@ end
 to house-ko
   set color grey
   set occupation 0 ; les habitants meurent tous
+  set water 0 ; plus d'eau car la maison est "détruite"
+  set elec 0 ; plus d'elec car la maison est "détruite"
   ask cars with [local = myself] [die] ; mort directe des cars
 end
 
@@ -371,7 +373,7 @@ SWITCH
 77
 display-occupation
 display-occupation
-1
+0
 1
 -1000
 
@@ -399,7 +401,7 @@ nb-houses
 nb-houses
 1
 100
-1.0
+9.0
 1
 1
 NIL
@@ -421,30 +423,30 @@ NIL
 HORIZONTAL
 
 SLIDER
-250
+251
 109
-481
+482
 142
 water-max
 water-max
 10
 1000
-100.0
+1000.0
 10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-249
+250
 157
-483
+484
 190
 elec-max
 elec-max
 10
 1000
-100.0
+1000.0
 10
 1
 NIL
@@ -457,10 +459,10 @@ SLIDER
 147
 water-frequence
 water-frequence
-1
-100
-10.0
-1
+0
+500
+30.0
+10
 1
 NIL
 HORIZONTAL
@@ -472,10 +474,10 @@ SLIDER
 198
 elec-frequence
 elec-frequence
-1
-100
-11.0
-1
+0
+500
+20.0
+10
 1
 NIL
 HORIZONTAL
@@ -496,10 +498,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-762
-237
-934
-270
+770
+234
+942
+267
 nb-water-towers
 nb-water-towers
 1
@@ -771,7 +773,7 @@ Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
 power-station
-true
+false
 0
 Polygon -7500403 true true 45 255 60 60 90 60 105 255
 Rectangle -7500403 true true 105 165 255 255

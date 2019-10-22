@@ -373,7 +373,7 @@ SWITCH
 77
 display-occupation
 display-occupation
-1
+0
 1
 -1000
 
@@ -386,7 +386,7 @@ nb-occupation
 nb-occupation
 0
 100
-8.0
+9.0
 1
 1
 NIL
@@ -401,7 +401,7 @@ nb-houses
 nb-houses
 1
 100
-1.0
+9.0
 1
 1
 NIL
@@ -423,30 +423,30 @@ NIL
 HORIZONTAL
 
 SLIDER
-250
+251
 109
-481
+482
 142
 water-max
 water-max
 10
-1000
-100.0
+2000
+2000.0
 10
 1
 NIL
 HORIZONTAL
 
 SLIDER
-249
+250
 157
-483
+484
 190
 elec-max
 elec-max
 10
-1000
-100.0
+2000
+2000.0
 10
 1
 NIL
@@ -459,10 +459,10 @@ SLIDER
 147
 water-frequence
 water-frequence
-1
-100
-10.0
-1
+0
+500
+100.0
+10
 1
 NIL
 HORIZONTAL
@@ -474,10 +474,10 @@ SLIDER
 198
 elec-frequence
 elec-frequence
-1
-100
-11.0
-1
+0
+500
+100.0
+10
 1
 NIL
 HORIZONTAL
@@ -491,22 +491,22 @@ nb-power-stations
 nb-power-stations
 1
 100
-1.0
+11.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-762
-237
-934
-270
+770
+234
+942
+267
 nb-water-towers
 nb-water-towers
 1
 100
-1.0
+9.0
 1
 1
 NIL
@@ -773,7 +773,7 @@ Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
 power-station
-true
+false
 0
 Polygon -7500403 true true 45 255 60 60 90 60 105 255
 Rectangle -7500403 true true 105 165 255 255
