@@ -18,7 +18,9 @@ public class Shark extends Agent {
 	private int breedTime;
 	private int starveTime;
 	private WatorScheduler scheduler;
-
+	private int lifeSpan;
+	private int age;
+	
 	public Shark(int posX, int posY, Environment environment, WatorAppConfig appConfig, WatorScheduler scheduler) {
 		super(posX, posY, environment);
 		this.appConfig = appConfig;
@@ -27,6 +29,9 @@ public class Shark extends Agent {
 																										// between 1 and
 																										// max starve
 																										// time
+		this.lifeSpan = this.appConfig.getRandom().nextInt(24) + 16; // nb between 16 and 24
+		this.age = 0;
+		
 		this.color = Color.RED;
 		this.scheduler = scheduler;
 	}
@@ -34,6 +39,10 @@ public class Shark extends Agent {
 	@Override
 	public void decide() {
 		this.color = Color.RED;
+		if (this.age >= this.lifeSpan) {
+			this.die();
+			return;
+		}
 		switch (this.appConfig.getWatorBehavior()) {
 		case WatorAppConfig.ONE_ACTION_PER_TICK:
 			this.decideOneAction();
@@ -48,6 +57,7 @@ public class Shark extends Agent {
 			this.decideReproduceEatAndMove();
 			break;
 		}
+		this.age++;
 	}
 
 	/**
@@ -419,5 +429,9 @@ public class Shark extends Agent {
 		this.environment.addAgent(son, x, y);
 		this.scheduler.birth(son);
 		this.breedTime = this.appConfig.getSharkBreedTime(); // reset breed time
+	}
+
+	public int getAge() {
+		return age;
 	}
 }

@@ -80,6 +80,8 @@ public class WatorScheduler extends Scheduler<WatorAppConfig> {
 
 			if (this.appConfig.hasTrace()) {
 				System.out.println("Tick;" + (i + 1) + ";" + this.countSharks() + ";" + this.countFishes());
+				this.printFishAges();
+				this.printSharkAges();
 			}
 			// sleep for delay
 			Thread.sleep(this.appConfig.getDelay());
@@ -179,5 +181,35 @@ public class WatorScheduler extends Scheduler<WatorAppConfig> {
 			}
 		}
 		return fishes;
+	}
+
+	private void printFishAges() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("FishAges");
+		for (int age = 0; age < 16; age++) {
+			int nbFishes = 0;
+			for (Agent agent : this.agents) {
+				if (agent instanceof Fish && ((Fish) agent).getAge() == age) {
+					nbFishes++;
+				}
+			}
+			sb.append(";" + nbFishes);
+		}
+		System.out.println(sb.toString());
+	}
+	
+	private void printSharkAges() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("SharkAges");
+		for (int age = 0; age < 24; age++) {
+			int nbSharks = 0;
+			for (Agent agent : this.agents) {
+				if (agent instanceof Shark && ((Shark) agent).getAge() == age) {
+					nbSharks++;
+				}
+			}
+			sb.append(";" + nbSharks);
+		}
+		System.out.println(sb.toString());
 	}
 }

@@ -15,6 +15,8 @@ public class Fish extends Agent {
 	private WatorAppConfig appConfig;
 	private WatorScheduler scheduler;
 	private int breedTime;
+	private int age;
+	private int lifeSpan;
 
 	public Fish(int posX, int posY, Environment environment, WatorAppConfig appConfig, WatorScheduler scheduler) {
 		super(posX, posY, environment);
@@ -22,6 +24,8 @@ public class Fish extends Agent {
 		this.appConfig = appConfig;
 		this.breedTime = this.appConfig.getFishBreedTime();
 		this.scheduler = scheduler;
+		this.age = 0;
+		this.lifeSpan = this.appConfig.getRandom().nextInt(16) + 8;
 	}
 
 	@Override
@@ -30,7 +34,20 @@ public class Fish extends Agent {
 		if (this.isDead) {
 			return;
 		}
+		
+		if(this.age >= this.lifeSpan) {
+			// DIE
+			this.environment.removeAgent(this.getPosX(), this.getPosY());
+			this.isDead = true;
 
+			// Print if required
+			if (this.appConfig.hasTrace()) {
+				System.out.println("Agent;Death;Fish;" + this.getPosX() + ";" + this.getPosY());
+			}
+			
+			return;
+		}
+		this.age++;
 		this.color = Color.GREEN;
 		boolean canFuck = this.breedTime == 0;
 
@@ -162,5 +179,9 @@ public class Fish extends Agent {
 		this.environment.addAgent(son, x, y);
 		this.scheduler.birth(son);
 		this.breedTime = this.appConfig.getFishBreedTime(); // reset breed time
+	}
+	
+	public int getAge() {
+		return age;
 	}
 }
