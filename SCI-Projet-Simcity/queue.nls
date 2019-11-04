@@ -1,0 +1,67 @@
+; #######################################################################################################
+; Ensemble de méthodes implémentant une file (FIFO) via une array fournie en paramètre de chaque méthodes
+; #######################################################################################################
+
+; variables globales qui vont contenir la file
+globals [
+	queue-start ; indice du premier élément de la file
+	queue-end ; indice du deuxième élément de la file
+	queue-elems ; tableau (extension "array") contenant les éléments de la file
+	queue-size ; nombre d'élément dans la pile (taille logique)
+]
+
+; Initialise la file avec la taille voulue
+to queue-init [queue-length]
+	; initialiser un tableau rempli d'élément -1
+	set queue-elems array:from-list n-values queue-length [nobody]
+	set queue-start 0 ; départ à 0 pour le moment
+	set queue-end  (queue-length - 1) ; on place ça en fin car on n'a rien pour l'instant (mais ça va changer grâce au modulo)
+  set queue-size 0
+end
+
+; ajouter un élément en fin de file
+to queue-push [elem]
+	ifelse (not queue-full?) [ ; vérifier qu'on a assez de place dans la file
+		set queue-size (queue-size + 1)
+		set queue-end ((queue-end + 1) mod (array:length queue-elems)) ; changer l'indice de fin de pile avec un modulo pour faire une table circulaire
+		array:set queue-elems queue-end elem
+	]
+	[
+		show "queue full" ; montrer un message d'erreur sinon
+	]
+end
+
+; retirer le dernier élément de la file
+to-report queue-poll
+	ifelse (not queue-empty?) [ ; vérifier que la file n'est pas vide
+		let polled (array:item queue-elems queue-start)
+		set queue-start ((queue-start + 1) mod (array:length queue-elems))
+		set queue-size (queue-size - 1)
+		report polled
+	]
+	[
+		show "queue empty"
+		report nobody
+	]
+end
+
+; retourne le sommet de pile
+to-report queue-top
+	ifelse (not queue-empty?) [
+		report (array:item queue-elems queue-start)
+	]
+	[
+		show "queue empty"
+		report nobody
+	]
+end
+
+; retourne true si la file est vide
+to-report queue-empty?
+	report (queue-size = 0)
+end
+
+; retourne true si la file est remplie au maximum de sa capacité
+to-report queue-full?
+	report (queue-size = (array:length queue-elems))
+end

@@ -1,22 +1,49 @@
 ; @author BARCHID Sami
 
+extensions [
+  array ; utile pour le BFS-advance
+]
+
+__includes [
+  "queue.nls" ; utile pour le BFS-advance
+]
+
+patches-own [
+  bfs-distance ; distance utilisée pour le BFS-advance (recherche du meilleur chemin)
+]
+
 ; breeds
-breed [cars car] ; voitures qui parcourent les routes
-breed [houses house] ; maisons contenant des habitants
+breed [inhabitants inhabitant] ; habitants de la ville qui habitent dans les maisons, vont travailler aux centrales/châteaux d'eau et prennent la voiture
+breed [job-offers job-offer] ; offre d'emploi parcourant la route pour trouver un inhabitant sans travail
+breed [houses house] ; maisons contenant des habitants et consommant de l'elec/water
 breed [water-towers water-tower] ; château d'eau fournissant de l'eau (water-supply)
 breed [power-stations power-station] ; centrale électrique fournissant de l'elec (elec-supply)
 breed [water-supplies water-supply] ; fourniture d'eau parcourant les routes pour alimenter les maisons dans le besoin
 breed [elec-supplies elec-supply] ; fourniture d'elec parcourant les routes pour alimenter les maisons dans le besoin
+breed [clocks clock] ; horloge qui affiche l'heure de la journée (complètement inutile mais c'est marrant)
 
-; variables
+; globals
+globals [
+  ticks-per-day ; nombre de ticks par jour
+]
+
+; variables de chaque turtle
 houses-own [
-  occupation ; nombre d'occupants de la maison
   elec ; capacité courante en electricité de la maison
   water ; capacité courante en eau de la maison
 ]
 
-cars-own [
-  local ; maison occupée par la voiture
+inhabitants-own [
+  local ; maison habitée
+  employer ; employeur du mec
+  destination ; patch vers lequel l'habitant doit se diriger
+  building-destination ; bâtiment vers lequel l'habitant doit aller (lié à destination), peut être une house, un power-station ou une water-tower
+  working-hour ; numéro du tier de la journée pour bosser (1 = 00:00-07:59, 2 = 08:00-15:59, 3 = 16:00 - 23;59)
+]
+
+job-offers-own [
+  boss ; patron qui a lancé l'offre d'emploi
+  working-hour ; numéro du tier de la journée pour bosser (1 = 00:00-07:59, 2 = 08:00-15:59, 3 = 16:00 - 23;59)
 ]
 
 ;##################################################################################
@@ -24,6 +51,9 @@ cars-own [
 to setup
   ca
   build-road
+
+  ; nombre de ticks par jour
+  set ticks-per-day 24 * ticks-per-hour
 
   ; Création des houses
   create-houses nb-houses [init-house]
@@ -33,6 +63,9 @@ to setup
 
   ; Création des châteaux d'eau
   create-water-towers nb-water-towers [init-water-tower]
+
+  ; créer l'horloge qui affichera l'heure
+  create-clocks 1 [init-clock]
 
   reset-ticks
 end
@@ -53,32 +86,27 @@ to build-road
     or
     abs(pycor) = (max-pycor / 2)
   ] [set pcolor white]
-
-  ; drôle
-;  ask patches with [pxcor = 0 or pycor = 0] [set pcolor white]
-;  ask patches with [pxcor < 0 and pycor = max-pycor] [set pcolor white]
-;  ask patches with [pxcor > 0 and pycor = min-pycor] [set pcolor white]
-;  ask patches with [pxcor = min-pxcor and pycor < 0] [set pcolor white]
-;  ask patches with [pxcor = max-pxcor and pycor > 0] [set pcolor white]
 end
 
 ; go loop
 to go
-  ask cars [car-decide]
+  ask clocks [clock-decide]
+  ask inhabitants [inhabitant-decide]
   ask elec-supplies [elec-supply-decide]
   ask water-supplies [water-supply-decide]
   ask houses [house-decide]
   ask power-stations [power-station-decide]
   ask water-towers [water-tower-decide]
+  ask job-offers [job-offer-decide]
   tick
 end
 
 
 
-;########################## AVANCEMENT AU HASARD ##########################
+;########################## FONCTIONS UTILITAIRES #########################
 ;##########################################################################
-; Fonction permettant à car, water-supply ou elec-supply d'avancer sur la route
-to advance
+; Fonction permettant à inhabitant, water-supply ou elec-supply d'avancer sur la route
+to rand-advance
   let f patch-ahead 1
   let r patch-right-and-ahead 90 1
   let l patch-left-and-ahead 90 1
@@ -99,44 +127,186 @@ to advance
   if (patch-here = l) [left 90]
 end
 
+; Fonction d'avancement pour arriver le plus rapidement possible vers la destination en paramètre (utilisant le breadth first search)
+; https://www.redblobgames.com/pathfinding/tower-defense/ pour comprendre la théorie
+to bfs-advance [dest]
+  ; Initialisation de la file
+  queue-init (count patches with [pcolor = white]) ; initialiser la file (maximum possible d'éléments = les patches de route (en blanc)
+  queue-push dest
+
+  ; Initialiser la distance à la destination à -1 pour tout le monde (-1 veut dire qu'on n'a pas encore évalué la distance)
+  ask patches with [pcolor = white] [set bfs-distance nobody]
+  ask dest [set bfs-distance 0]
+
+
+  while [not queue-empty?] [
+    let current queue-poll
+    let distance-current ([bfs-distance] of current)
+
+    let near-roads [neighbors4 with [pcolor = white and bfs-distance = nobody]] of current
+    ask near-roads [
+      queue-push self
+      set bfs-distance (1 + distance-current)
+    ]
+  ]
+
+  ; CHOISIR le meilleur voisin du patch courant (poru le plus court chemin)
+  ; se déplacer vers le morceau de route qui montre le plus rapide chemin
+  face min-one-of neighbors4 with [pcolor = white] [bfs-distance]
+  move-to min-one-of neighbors4 with [pcolor = white] [bfs-distance]
+end
+
+; retourne un identifiant pour le patch en paramètre (utilisé pour la gestion de la hashmap dans le bfs)
+to-report id-of-patch [ptch]
+  report list ([pxcor] of ptch) ([pycor] of ptch)
+end
+
+; numéro de l'heure de la journée
+to-report get-hour
+  let ticks-of-day (ticks mod ticks-per-day) ; nombre de ticks écoulés dans la journée
+  report int (ticks-of-day / ticks-per-hour)
+end
+
+; Fonction pour récupérer le numéro du tier de la journée
+to-report get-day-tier
+  let hour get-hour ; récupérer l'heure
+
+  if hour < 8 [
+    report 1
+  ]
+
+  if hour < 16 [
+    report 2
+  ]
+
+  report 3
+end
+
 
 
 ;##################################################################################
-;#################################### CAR #########################################
-; Initialisation d'une car
-to init-car [new-local] ; new-local est la maison par laquel sort la voiture
-  set shape "car-rotate"
+;#################################### INHABITANT ##################################
+; Initialisation d'une inhabitant
+to init-inhabitant [new-local] ; new-local est la house où le inhabitant habite
+  set shape "car top"
+  set hidden? true
 
-  ; Attribution de la maison de la voiture
+  ; Attribution de la maison du inhabitant
   set local new-local
+  move-to local
 
-  ; sélectionner morceau de route où la voiture se place devant sa maison
-  let road-available [neighbors4 with [pcolor = white]] of local
-  move-to one-of road-available
 
-  ; Se diriger là où on veut
-  face one-of neighbors4 with [pcolor = white]
+  ; Un inhabitant créé n'a pas de destination
+  set destination nobody
+  set building-destination nobody
+
+  ; Un inhabitant créé n'a pas d'employeur
+  set employer nobody
 
   ; uniquement pour l'affichage
-  set label ""
   set size 2
+  set color [color] of local ; même couleur que la maison pour faire un poil de rapprochement
 end
 
-to car-decide
-  advance
-  let near-houses houses-on neighbors4
+to inhabitant-decide
+  ; SI [je suis sur la route vers une destination] -> continuer d'y aller (SI je suis à côté de la destination, je rentre)
+  if ([pcolor] of patch-here = white) [
+    inhabitant-move
+    stop
+  ]
 
-  if any? near-houses with [self = [local] of myself] [
-    car-interact-local
+  ; SI [je suis un carolo (je n'ai pas de boulot et je suis donc chez moi)] -> go se toucher full
+  if employer = nobody [
+    ; je me touche de ouf
+    stop
+  ]
+
+  ; SI [je suis chez moi et je n'ai pas de travail à ce tier de la journée] -> je me touche chez oim
+  if patch-here = [patch-here] of local and working-hour != get-day-tier [
+    ; je me touche-zer
+    stop
+  ]
+
+  ; SI [je suis chez moi et j'ai un travail à ce tier de la journée] -> je sors de chez oim et mon boulot devient ma destination
+  if patch-here = [patch-here] of local and working-hour = get-day-tier [
+    inhabitant-go-to-work
+  ]
+
+  ; SI [je suis à l'usine et c'est toujours mon horaire de boulot] -> je bosse et je ne fais rien d'autre
+  if patch-here = [patch-here] of employer and working-hour = get-day-tier [
+    ; je me touche-zer
+    stop
+  ]
+
+  ; SI [je suis à l'usine et mon horaire de boulot est fini] -> je me casse de l'usine, ma maison devient ma destination
+  if patch-here = [patch-here] of employer and working-hour != get-day-tier [
+    inhabitant-go-home
   ]
 end
 
-; Fonction appelée quand une voiture arrive devant sa maison (rentre chez lui en gros)
-to car-interact-local
-  ask local [set occupation (occupation + 1)]
-  die
+; Fonction appelée quand le inhabitant doit sortir du bâtiment où il se trouve
+to inhabitant-leave [building] ; building est le bâtiment duquel le inhabitant doit sortir
+  set hidden? false ; la voiture du inhabitant devient visible
+
+  ; sélectionner morceau de route où la voiture se place devant sa maison
+  let road-available [neighbors4 with [pcolor = white]] of building
+  move-to one-of road-available
+
+  ; Faire face à la route (uniquement de l'affichage)
+  face one-of neighbors4 with [pcolor = white]
 end
 
+; Fonction qui permet au inhabitant d'entrer dans un bâtiment
+to inhabitant-enter [building] ; building est le bâtiment dans lequel le inhabitant doit rentrer
+  set hidden? true ; devient invisible
+  move-to building ; se transporter sur la case du batiment
+  set destination nobody ; je suis arrivé à bon port, j'arrête
+  set building-destination nobody
+end
+
+; se déplace vers sa destination (ou rentre dans le bâtiment si je suis arrivé devant)
+to inhabitant-move
+  ; SI [je suis devant mon bâtiment (et donc arrivé à destination)]
+  ifelse patch-here = destination [
+    inhabitant-enter building-destination
+  ]
+  ; SINON, j'avance au plus court chemin
+  [
+    bfs-advance destination
+  ]
+end
+
+; Sort de chez lui et va à son lieu de travail
+to inhabitant-go-to-work
+  inhabitant-leave local
+  set destination one-of [neighbors4 with [pcolor = white]] of employer
+  set building-destination employer
+end
+
+; Sort de son lieu de travail et va chez lui
+to inhabitant-go-home
+  inhabitant-leave employer
+  set destination one-of [neighbors4 with [pcolor = white]] of local
+  set building-destination local
+end
+
+to test-dist
+end
+
+; Fonction appelée quand le inhabitant se fait virer de son travail
+to inhabitant-getting-fired
+  ; le code qui suit est la routine quotidienne d'un habitant de Charleroi
+  inhabitant-leave employer ; je quitte l'usine
+  set destination one-of [neighbors4 with [pcolor = white]] of local ; je m'apprête à rentrer chez moi
+  set building-destination local
+  set employer nobody ; je suis au chômage
+end
+
+; Fonction appelée quand le inhabitant se fait engager par une job-offer
+to inhabitant-getting-hired [offer]
+  set employer [boss] of offer
+  set working-hour [working-hour] of offer
+end
 
 
 ;##################################################################################
@@ -146,13 +316,17 @@ to init-house
   set shape "house"
   set size 1
 
-  ; Pour éviter qu'une maison soit grise (car le gris est la couleur d'une house morte)
+  ; Pour éviter qu'une maison soit grise (vu que le gris est la couleur d'une house morte)
   if color = grey [
     set color blue
   ]
 
-  ; nombre d'habitants de la maison entre 1 et nbOccupations
-  set occupation (random (nb-occupation) + 1)
+  ; bouger à un endroit juste à côté d'une route (avec personne d'autre dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+
+  ; créer les inhabitants de la house
+  let occupation (random (nb-occupations) + 1) ; nombre d'habitants de la maison entre 1 et nb-occupations
+  hatch-inhabitants occupation [init-inhabitant myself]
 
   ; initialiser les capacités en eau et elec
   set elec elec-max
@@ -162,9 +336,6 @@ to init-house
   if display-occupation [
     set label occupation
   ]
-
-  ; bouger à un endroit juste à côté d'une route (personne d'autre dessus)
-  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
 end
 
 to house-decide
@@ -173,11 +344,8 @@ to house-decide
     stop
   ]
 
-  ; chier une car si je peux et si j'en ai le droit
-  if occupation > 0 and (random car-frequence) = 0 [
-    hatch-cars 1 [init-car myself]
-    set occupation (occupation - 1)
-  ]
+
+  let occupation count inhabitants with [(pycor = [pycor] of myself) and (pxcor = [pxcor] of myself)]
 
   ; Consommation d'elec
   set elec (elec - occupation)
@@ -190,7 +358,7 @@ to house-decide
     house-ko
   ]
 
-  ; mettre à jour le nombre de cars affiché (si demandé)
+  ; mettre à jour le nombre de inhabitants affiché (si demandé)
   if display-occupation [
     set label occupation
   ]
@@ -199,10 +367,10 @@ end
 ; fonction de mort d'une maison (pour cause de pénurie d'elec/eau)
 to house-ko
   set color grey
-  set occupation 0 ; les habitants meurent tous
-  set water 0 ; plus d'eau car la maison est "détruite"
-  set elec 0 ; plus d'elec car la maison est "détruite"
-  ask cars with [local = myself] [die] ; mort directe des cars
+  set water 0 ; plus d'eau inhabitant la maison est "détruite"
+  set elec 0 ; plus d'elec inhabitant la maison est "détruite"
+  ask inhabitants with [local = myself] [die] ; mort directe des inhabitants
+  set label 0
 end
 
 
@@ -219,12 +387,56 @@ end
 
 ; Fonction de décision d'une centrale électrique
 to power-station-decide
-  ; chier un elec-supply suivant la fréquence entrée dans le slider
-  if (random elec-frequence) = 0 [
-    hatch-elec-supplies 1 [init-elec-supply myself]
+  power-station-supply
+
+  ; Chance de virer un gitan toutes les heures
+  power-station-firing
+
+  ; Engager des gitans si on est en manque d'effectif
+  power-station-hiring
+end
+
+; Fonction qui crée du elec-supply
+to power-station-supply
+  ; chier un elec-supply suivant la fréquence entrée dans le slider et les travailleurs
+  let nb-workers count inhabitants-on patch-here ; nombre de travailleurs sur place (donc qui travaillent)
+  if (random elec-frequence) < nb-workers  [
+    hatch-elec-supplies 1 [init-elec-supply myself] ; plus il y a de travailleurs,  plus on a de chance de produire de l'elec
   ]
 end
 
+; Fonction pour virer un employé (à chaque début d'une nouvelle heure, avec une chance qu'il reste)
+to power-station-firing
+  let new-hour? (ticks mod ticks-per-hour) = 0 ; flag indiquant si on est dans une nouvelle heure
+
+  ; Tirage au sort pour voir si je vire quelqu'un
+  if new-hour? and (random power-station-firing-frequence) = 0 and any? inhabitants-on patch-here [
+    ask one-of inhabitants-on patch-here [inhabitant-getting-fired] ; virer le peye
+  ]
+end
+
+; FOnction pour engager un gitan si on manque d'effectif
+to power-station-hiring
+  ; POUR CHAQUE tier de la journée, on vérifie qu'on a/cherche déjà assez de gitans, sinon on lance des job-offers
+
+  ; de 00:00 à 07:59
+  let nb-workers (count inhabitants with [employer = myself and working-hour = 1 ]) + (count job-offers with [boss = myself and working-hour = 1])
+  if nb-workers < power-station-max-workers [
+    hatch-job-offers (power-station-max-workers - nb-workers) [init-job-offer myself 1]
+  ]
+
+  ; de 08:00 à 15:59
+  set nb-workers (count inhabitants with [employer = myself and working-hour = 2 ]) + (count job-offers with [boss = myself and working-hour = 2])
+  if nb-workers < power-station-max-workers [
+    hatch-job-offers (power-station-max-workers - nb-workers) [init-job-offer myself 2]
+  ]
+
+  ; de 16:00 à 23:59
+  set nb-workers (count inhabitants with [employer = myself and working-hour = 3 ]) + (count job-offers with [boss = myself and working-hour = 3])
+  if nb-workers < power-station-max-workers [
+    hatch-job-offers (power-station-max-workers - nb-workers) [init-job-offer myself 3]
+  ]
+end
 
 
 ;##################################################################################
@@ -239,9 +451,54 @@ end
 
 ; Fonction de décision d'un chateau d'eau
 to water-tower-decide
-  ; chier un water-supply suivant la fréquence entrée dans le slider
-  if (random water-frequence) = 0 [
-    hatch-water-supplies 1 [init-water-supply myself]
+  water-tower-supply
+
+  ; Chance de virer un gitan toutes les heures
+  water-tower-firing
+
+  ; Engager des gitans si on est en manque d'effectif
+  water-tower-hiring
+end
+
+; Fonction qui crée du water-supply
+to water-tower-supply
+  ; chier un water-supply suivant la fréquence entrée dans le slider et les travailleurs
+  let nb-workers count inhabitants-on patch-here ; nombre de travailleurs sur place (donc qui travaillent)
+  if (random water-frequence) < nb-workers  [
+    hatch-water-supplies 1 [init-water-supply myself] ; plus il y a de travailleurs,  plus on a de chance de produire de la water
+  ]
+end
+
+; Fonction pour virer un employé (à chaque début d'une nouvelle heure, avec une chance qu'il reste)
+to water-tower-firing
+  let new-hour? (ticks mod ticks-per-hour) = 0 ; flag indiquant si on est dans une nouvelle heure
+
+  ; Tirage au sort pour voir si je vire quelqu'un
+  if new-hour? and (random water-tower-firing-frequence) = 0 and any? inhabitants-on patch-here [
+    ask one-of inhabitants-on patch-here [inhabitant-getting-fired] ; virer le peye
+  ]
+end
+
+; FOnction pour engager un gitan si on manque d'effectif
+to water-tower-hiring
+  ; POUR CHAQUE tier de la journée, on vérifie qu'on a/cherche déjà assez de gitans, sinon on lance des job-offers
+
+  ; de 00:00 à 07:59
+  let nb-workers (count inhabitants with [employer = myself and working-hour = 1 ]) + (count job-offers with [boss = myself and working-hour = 1])
+  if nb-workers < water-tower-max-workers [
+    hatch-job-offers (water-tower-max-workers - nb-workers) [init-job-offer myself 1]
+  ]
+
+  ; de 08:00 à 15:59
+  set nb-workers (count inhabitants with [employer = myself and working-hour = 2 ]) + (count job-offers with [boss = myself and working-hour = 2])
+  if nb-workers < water-tower-max-workers [
+    hatch-job-offers (water-tower-max-workers - nb-workers) [init-job-offer myself 2]
+  ]
+
+  ; de 16:00 à 23:59
+  set nb-workers (count inhabitants with [employer = myself and working-hour = 3 ]) + (count job-offers with [boss = myself and working-hour = 3])
+  if nb-workers < water-tower-max-workers [
+    hatch-job-offers (water-tower-max-workers - nb-workers) [init-job-offer myself 3]
   ]
 end
 
@@ -265,7 +522,7 @@ end
 ; Fonction de décision d'un elec-supply
 to elec-supply-decide
   ; avancer
-  advance
+  rand-advance
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
@@ -295,13 +552,76 @@ end
 ; Fonction de décision d'un water-supply
 to water-supply-decide
   ; avancer
-  advance
+  rand-advance
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
   if any? near-houses with [water < water-max and color != grey] [
     ask one-of near-houses with [water < water-max] [set water water-max]
     die ; meurt après le premier rechargement
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### JOB-OFFER ###################################
+; Initialiser la job-offer
+to init-job-offer [related-boss schedule] ; related-boss est le boss qui a lancé la job-offer
+  set boss related-boss
+  set working-hour schedule
+  set shape "briefcase"
+  set size 1
+
+  ; sélectionner morceau de route où la job-offer se place devant l'employeur
+  let road-available [neighbors4 with [pcolor = white]] of boss
+  move-to one-of road-available
+
+  ; Se diriger là où on veut sur la route
+  face one-of neighbors4 with [pcolor = white]
+end
+
+to job-offer-decide
+  rand-advance
+
+  ; Vérifier si on ne croise pas un inhabitant au chômage dans sa maison (s'il est hidden? c'est qu'il est dans sa maison)
+  let near-carolos inhabitants-on neighbors4
+  if any? near-carolos with [employer = nobody and hidden?] [
+    job-offer-recrute one-of near-carolos with [employer = nobody and hidden?]
+  ]
+end
+
+; Donne la job-offer à un inhabitant
+to job-offer-recrute [worker] ; worker est le inhabitant qui va choper l'emploi
+  ask worker [inhabitant-getting-hired myself]
+  die ; meurt quand la job-offer est acceptée
+end
+
+
+
+;##################################################################################
+;#################################### CLOCK #######################################
+; initialiser la clock
+to init-clock
+  move-to patch 4 4
+  set size 3
+  set shape "clock"
+  set color white
+  facexy 4 5; faire pointer l'horloge vers la dernière heure comme ça au premier appel du "go" on pointe sur 0
+  lt 30
+  set label 0
+end
+
+; Tourne quand l'heure avance pour symbolier le changemet d'heure
+to clock-decide
+  let new-hour? (ticks mod ticks-per-hour) = 0 ; flag indiquant si on est dans une nouvelle heure
+
+  if new-hour? [
+    set label get-hour
+    rt 30 ; 30 degré = 360° / les 12 heures affichés par une horloge
+    ask patch 4 6 [
+      set plabel get-day-tier
+    ]
   ]
 end
 @#$#@#$#@
@@ -378,21 +698,6 @@ display-occupation
 -1000
 
 SLIDER
-766
-102
-940
-135
-nb-occupation
-nb-occupation
-0
-100
-8.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
 767
 141
 939
@@ -401,23 +706,8 @@ nb-houses
 nb-houses
 1
 100
-9.0
+10.0
 1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-548
-219
-720
-252
-car-frequence
-car-frequence
-0
-500
-100.0
-10
 1
 NIL
 HORIZONTAL
@@ -429,10 +719,10 @@ SLIDER
 142
 water-max
 water-max
-10
 1000
-1000.0
-10
+5000
+5000.0
+100
 1
 NIL
 HORIZONTAL
@@ -444,40 +734,10 @@ SLIDER
 190
 elec-max
 elec-max
-10
 1000
-1000.0
-10
-1
-NIL
-HORIZONTAL
-
-SLIDER
-550
-114
-723
-147
-water-frequence
-water-frequence
-0
-500
-30.0
-10
-1
-NIL
-HORIZONTAL
-
-SLIDER
-549
-165
-723
-198
-elec-frequence
-elec-frequence
-0
-500
-20.0
-10
+5000
+5000.0
+100
 1
 NIL
 HORIZONTAL
@@ -511,6 +771,143 @@ nb-water-towers
 1
 NIL
 HORIZONTAL
+
+SLIDER
+188
+355
+383
+388
+water-tower-max-workers
+water-tower-max-workers
+1
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+189
+313
+392
+346
+power-station-max-workers
+power-station-max-workers
+1
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+770
+286
+942
+319
+nb-occupations
+nb-occupations
+1
+100
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+617
+472
+789
+505
+water-frequence
+water-frequence
+1
+1000
+51.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+628
+549
+800
+582
+elec-frequence
+elec-frequence
+1
+1000
+41.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+192
+183
+225
+ticks-per-hour
+ticks-per-hour
+100
+10000
+100.0
+100
+1
+NIL
+HORIZONTAL
+
+SLIDER
+186
+410
+398
+443
+water-tower-firing-frequence
+water-tower-firing-frequence
+0
+1000
+1000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+188
+533
+408
+566
+power-station-firing-frequence
+power-station-firing-frequence
+0
+1000
+1000.0
+10
+1
+NIL
+HORIZONTAL
+
+BUTTON
+432
+212
+510
+245
+NIL
+test-dist
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -574,6 +971,19 @@ Line -16777216 false 150 285 150 135
 Line -16777216 false 150 135 15 75
 Line -16777216 false 150 135 285 75
 
+briefcase
+true
+0
+Rectangle -7500403 true true 30 165 270 240
+Rectangle -7500403 true true 30 75 270 150
+Rectangle -7500403 true true 180 30 195 75
+Rectangle -7500403 true true 105 30 120 75
+Rectangle -7500403 true true 105 30 180 45
+Rectangle -7500403 true true 120 165 195 180
+Rectangle -16777216 true false 165 150 180 195
+Rectangle -16777216 true false 135 180 180 195
+Rectangle -16777216 true false 120 150 135 195
+
 bug
 true
 0
@@ -604,6 +1014,21 @@ Circle -16777216 true false 30 180 90
 Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
 Circle -7500403 true true 47 195 58
 Circle -7500403 true true 195 195 58
+
+car top
+true
+0
+Polygon -7500403 true true 151 8 119 10 98 25 86 48 82 225 90 270 105 289 150 294 195 291 210 270 219 225 214 47 201 24 181 11
+Polygon -16777216 true false 210 195 195 210 195 135 210 105
+Polygon -16777216 true false 105 255 120 270 180 270 195 255 195 225 105 225
+Polygon -16777216 true false 90 195 105 210 105 135 90 105
+Polygon -1 true false 205 29 180 30 181 11
+Line -7500403 false 210 165 195 165
+Line -7500403 false 90 165 105 165
+Polygon -16777216 true false 121 135 180 134 204 97 182 89 153 85 120 89 98 97
+Line -16777216 false 210 90 195 30
+Line -16777216 false 90 90 105 30
+Polygon -1 true false 95 29 120 30 119 11
 
 car-rotatable
 true
@@ -638,6 +1063,13 @@ false
 0
 Circle -7500403 true true 0 0 300
 Circle -16777216 true false 30 30 240
+
+clock
+true
+0
+Circle -7500403 true true 30 30 240
+Polygon -16777216 true false 150 31 128 75 143 75 143 150 158 150 158 75 173 75
+Circle -16777216 true false 135 135 30
 
 cow
 false
