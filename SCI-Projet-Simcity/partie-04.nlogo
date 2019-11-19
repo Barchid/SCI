@@ -291,6 +291,7 @@ to inhabitant-go-home
 end
 
 to test-dist
+  show random water-tower-firing-frequence
 end
 
 ; Fonction appelée quand le inhabitant se fait virer de son travail
@@ -361,6 +362,9 @@ to house-decide
   ; mettre à jour le nombre de inhabitants affiché (si demandé)
   if display-occupation [
     set label occupation
+    if color = grey [
+      set label 0
+    ]
   ]
 end
 
@@ -370,7 +374,6 @@ to house-ko
   set water 0 ; plus d'eau inhabitant la maison est "détruite"
   set elec 0 ; plus d'elec inhabitant la maison est "détruite"
   ask inhabitants with [local = myself] [die] ; mort directe des inhabitants
-  set label 0
 end
 
 
@@ -411,6 +414,7 @@ to power-station-firing
 
   ; Tirage au sort pour voir si je vire quelqu'un
   if new-hour? and (random power-station-firing-frequence) = 0 and any? inhabitants-on patch-here [
+    show "FIRED"
     ask one-of inhabitants-on patch-here [inhabitant-getting-fired] ; virer le peye
   ]
 end
@@ -475,6 +479,7 @@ to water-tower-firing
 
   ; Tirage au sort pour voir si je vire quelqu'un
   if new-hour? and (random water-tower-firing-frequence) = 0 and any? inhabitants-on patch-here [
+    show "FIRED"
     ask one-of inhabitants-on patch-here [inhabitant-getting-fired] ; virer le peye
   ]
 end
@@ -619,6 +624,8 @@ to clock-decide
   if new-hour? [
     set label get-hour
     rt 30 ; 30 degré = 360° / les 12 heures affichés par une horloge
+
+    ; afficher le tier de la journée en haut de l'horloge
     ask patch 4 6 [
       set plabel get-day-tier
     ]
@@ -751,7 +758,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-1.0
+4.0
 1
 1
 NIL
@@ -766,7 +773,7 @@ nb-water-towers
 nb-water-towers
 1
 100
-1.0
+4.0
 1
 1
 NIL
@@ -781,7 +788,7 @@ water-tower-max-workers
 water-tower-max-workers
 1
 100
-1.0
+5.0
 1
 1
 NIL
@@ -796,7 +803,7 @@ power-station-max-workers
 power-station-max-workers
 1
 100
-1.0
+5.0
 1
 1
 NIL
@@ -811,7 +818,7 @@ nb-occupations
 nb-occupations
 1
 100
-3.0
+7.0
 1
 1
 NIL
@@ -871,7 +878,7 @@ water-tower-firing-frequence
 water-tower-firing-frequence
 0
 1000
-1000.0
+20.0
 10
 1
 NIL
@@ -886,7 +893,7 @@ power-station-firing-frequence
 power-station-firing-frequence
 0
 1000
-1000.0
+20.0
 10
 1
 NIL
