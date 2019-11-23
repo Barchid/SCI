@@ -304,7 +304,10 @@ to inhabitant-go-home
 end
 
 to test-dist
-  ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
+
+
+  ask patches with [pxcor = -13 and pycor < -11] [set pcolor white]
+  ;ask patches with [pycor =
 end
 
 to test-2
