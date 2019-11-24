@@ -54,12 +54,18 @@ to build-road
     abs(pycor) = (max-pycor / 2)
   ] [set pcolor white]
 
-  ; drôle
-;  ask patches with [pxcor = 0 or pycor = 0] [set pcolor white]
-;  ask patches with [pxcor < 0 and pycor = max-pycor] [set pcolor white]
-;  ask patches with [pxcor > 0 and pycor = min-pycor] [set pcolor white]
-;  ask patches with [pxcor = min-pxcor and pycor < 0] [set pcolor white]
-;  ask patches with [pxcor = max-pxcor and pycor > 0] [set pcolor white]
+  ; ajouter des obstacles un peu moins probables
+  ask patches with [pxcor = -13 and pycor < -11] [set pcolor white]
+  ask patches with [pxcor > 8 and pycor = -16] [set pcolor black]
+  ask patches with [pxcor >= -3 and pxcor <= 0 and pycor = 13] [set pcolor white]
+  ask patches with [pxcor >= -15 and pxcor <= -9 and pycor = -5] [set pcolor white]
+  ask patches with [pxcor >= 15 and pxcor <= -12 and pycor = 12] [set pcolor white]
+  ask patches with [pxcor = 12 and pycor >= 1 and pycor <= 6] [set pcolor white]
+  ask patches with [pxcor = -13 and pycor >= -4 and pycor <= -1] [set pcolor white]
+  ask patches with [pxcor = -11 and pycor >= -7 and pycor <= -6] [set pcolor white]
+  ask patches with [pxcor = -5 and pycor = 8] [set pcolor black]
+  ask patches with [pxcor = 8 and pycor >= 3 and pycor <= 5] [set pcolor black]
+  ask patches with [pxcor >= -2 and pxcor <= 2 and pycor >= -2 and pycor <= 2] [set pcolor black]
 end
 
 ; go loop
@@ -105,7 +111,7 @@ end
 ;#################################### CAR #########################################
 ; Initialisation d'une car
 to init-car [new-local] ; new-local est la maison par laquel sort la voiture
-  set shape "car-rotate"
+  set shape "car top"
 
   ; Attribution de la maison de la voiture
   set local new-local
@@ -604,6 +610,21 @@ Circle -16777216 true false 30 180 90
 Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
 Circle -7500403 true true 47 195 58
 Circle -7500403 true true 195 195 58
+
+car top
+true
+0
+Polygon -7500403 true true 151 8 119 10 98 25 86 48 82 225 90 270 105 289 150 294 195 291 210 270 219 225 214 47 201 24 181 11
+Polygon -16777216 true false 210 195 195 210 195 135 210 105
+Polygon -16777216 true false 105 255 120 270 180 270 195 255 195 225 105 225
+Polygon -16777216 true false 90 195 105 210 105 135 90 105
+Polygon -1 true false 205 29 180 30 181 11
+Line -7500403 false 210 165 195 165
+Line -7500403 false 90 165 105 165
+Polygon -16777216 true false 121 135 180 134 204 97 182 89 153 85 120 89 98 97
+Line -16777216 false 210 90 195 30
+Line -16777216 false 90 90 105 30
+Polygon -1 true false 95 29 120 30 119 11
 
 car-rotatable
 true

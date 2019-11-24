@@ -195,7 +195,10 @@ to-report get-day-tier
   report 3
 end
 
-
+; Retourne le nombre de jours passés
+to-report get-day
+  report int (ticks / ticks-per-day)
+end
 
 ;##################################################################################
 ;#################################### INHABITANT ##################################
@@ -304,10 +307,7 @@ to inhabitant-go-home
 end
 
 to test-dist
-
-
-  ask patches with [pxcor = -13 and pycor < -11] [set pcolor white]
-  ;ask patches with [pycor =
+  ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
 end
 
 to test-2
@@ -710,6 +710,13 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
+OUTPUT
+0
+0
+0
+0
+11
+
 BUTTON
 266
 44
@@ -1033,6 +1040,39 @@ NIL
 NIL
 NIL
 1
+
+MONITOR
+553
+251
+676
+296
+Heure de la journée
+get-hour
+17
+1
+11
+
+MONITOR
+557
+189
+728
+234
+Numéro de tier de la journée
+get-day-tier
+17
+1
+11
+
+MONITOR
+508
+659
+593
+704
+Jours passés
+get-day
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

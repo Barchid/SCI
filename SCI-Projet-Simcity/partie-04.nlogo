@@ -195,7 +195,10 @@ to-report get-day-tier
   report 3
 end
 
-
+; Retourne le nombre de jours passés
+to-report get-day
+  report int (ticks / ticks-per-day)
+end
 
 ;##################################################################################
 ;#################################### INHABITANT ##################################
@@ -1030,6 +1033,39 @@ NIL
 NIL
 NIL
 1
+
+MONITOR
+553
+251
+676
+296
+Heure de la journée
+get-hour
+17
+1
+11
+
+MONITOR
+557
+189
+728
+234
+Numéro de tier de la journée
+get-day-tier
+17
+1
+11
+
+MONITOR
+508
+659
+593
+704
+Jours passés
+get-day
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

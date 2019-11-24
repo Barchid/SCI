@@ -1,42 +1,39 @@
 ; @author BARCHID Sami
-extensions [table]
 
-globals [
- ; variables globales pour décrire les nombres de fois que les voitures choisissent l'une ou l'autre directions
- turn-left
- turn-right
- go-forward
- go-backward
+; breeds
+breed [cars car] ; voitures qui parcourent les routes
+breed [houses house] ; maisons contenant des habitants
+breed [water-towers water-tower] ; château d'eau fournissant de l'eau (water-supply)
+breed [power-stations power-station] ; centrale électrique fournissant de l'elec (elec-supply)
+breed [water-supplies water-supply] ; fourniture d'eau parcourant les routes pour alimenter les maisons dans le besoin
+breed [elec-supplies elec-supply] ; fourniture d'elec parcourant les routes pour alimenter les maisons dans le besoin
+
+; variables
+houses-own [
+  occupation ; nombre d'occupants de la maison
+  elec ; capacité courante en electricité de la maison
+  water ; capacité courante en eau de la maison
 ]
 
-breed [cars car]
-
 cars-own [
-  direction-choice ; variable retenant le choix de direction de la voiture pour le tour courant
+  local ; maison occupée par la voiture
 ]
 
 ;##################################################################################
 ;#################################### SETUP #######################################
 to setup
   ca
+  build-road
 
-  ; initialisation des variables globales pour les stats
-  set turn-left 0
-  set turn-right 0
-  set go-forward 0
-  set go-backward 0
+  ; Création des houses
+  create-houses nb-houses [init-house]
 
-  ; choix de la construction de la route
-  ifelse road-setup = "city" [
-    build-road
-  ]
-  [
-    ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
-  ]
+  ; Création des centrales électriques
+  create-power-stations nb-power-stations [init-power-station]
 
+  ; Création des châteaux d'eau
+  create-water-towers nb-water-towers [init-water-tower]
 
-  ; Création des cars
-  create-cars nbcars [init-car]
   reset-ticks
 end
 
@@ -57,46 +54,30 @@ to build-road
     abs(pycor) = (max-pycor / 2)
   ] [set pcolor white]
 
-  ; ajouter des obstacles un peu moins probables
-  ask patches with [pxcor = -13 and pycor < -11] [set pcolor white]
-  ask patches with [pxcor > 8 and pycor = -16] [set pcolor black]
-  ask patches with [pxcor >= -3 and pxcor <= 0 and pycor = 13] [set pcolor white]
-  ask patches with [pxcor >= -15 and pxcor <= -9 and pycor = -5] [set pcolor white]
-  ask patches with [pxcor >= 15 and pxcor <= -12 and pycor = 12] [set pcolor white]
-  ask patches with [pxcor = 12 and pycor >= 1 and pycor <= 6] [set pcolor white]
-  ask patches with [pxcor = -13 and pycor >= -4 and pycor <= -1] [set pcolor white]
-  ask patches with [pxcor = -11 and pycor >= -7 and pycor <= -6] [set pcolor white]
-  ask patches with [pxcor = -5 and pycor = 8] [set pcolor black]
-  ask patches with [pxcor = 8 and pycor >= 3 and pycor <= 5] [set pcolor black]
-  ask patches with [pxcor >= -2 and pxcor <= 2 and pycor >= -2 and pycor <= 2] [set pcolor black]
+  ; drôle
+;  ask patches with [pxcor = 0 or pycor = 0] [set pcolor white]
+;  ask patches with [pxcor < 0 and pycor = max-pycor] [set pcolor white]
+;  ask patches with [pxcor > 0 and pycor = min-pycor] [set pcolor white]
+;  ask patches with [pxcor = min-pxcor and pycor < 0] [set pcolor white]
+;  ask patches with [pxcor = max-pxcor and pycor > 0] [set pcolor white]
 end
-
-; Initialisation d'une car
-to init-car
-  set direction-choice nobody ; pas encore bougé donc pas de direction choisie
-  set shape "car top"
-  if (color = white) [ set color blue ] ; éviter qu'une voiture soi de la même couleur que la route (on voit mal après)
-  move-to one-of patches with [pcolor = white]
-  face one-of neighbors4 with [pcolor = white]
-  set size 2
-end
-;##################################################################################
-;#################################### /SETUP ######################################
 
 ; go loop
 to go
-  ask cars [decide]
+  ask cars [car-decide]
+  ask elec-supplies [elec-supply-decide]
+  ask water-supplies [water-supply-decide]
+  ask houses [house-decide]
+  ask power-stations [power-station-decide]
+  ask water-towers [water-tower-decide]
   tick
 end
 
 
-;##################################################################################
-;#################################### CAR #########################################
-to decide
-  set direction-choice nobody ; réinitialisation du choix de direction pour le tour
-  advance
-end
 
+;########################## AVANCEMENT AU HASARD ##########################
+;##########################################################################
+; Fonction permettant à car, water-supply ou elec-supply d'avancer sur la route
 to advance
   let f patch-ahead 1
   let r patch-right-and-ahead 90 1
@@ -107,18 +88,9 @@ to advance
   ; SI [je peux avancer quelque part]
   ifelse any? dirs
     [ ; Je choisis une direction au hasard
-      let dir choose-direction f r l
-
-      ; retenir le choix de direction pris (pour les stats)
-      if dir = f [set direction-choice "Forward" set go-forward (go-forward + 1)]
-      if dir = r [set direction-choice "Right" set turn-right (turn-right + 1)]
-      if dir = l [set direction-choice "Left" set turn-left (turn-left + 1)]
-
-      move-to dir
+      move-to one-of dirs
     ]
     [ ; je rebrousse chemin (cul de sac oblige)
-      set direction-choice "Backward"
-      set go-backward (go-backward + 1)
       move-to patch-left-and-ahead 180 1
       left 180
     ]
@@ -127,101 +99,210 @@ to advance
   if (patch-here = l) [left 90]
 end
 
-; Fonction qui choisit la direction (parmis les trois patches en paramètres) vers laquelle la car va aller
-; retourne le patch choisi parmis les trois en paramètres
-to-report choose-direction [f r l]
-  let f_color black
-  if f != nobody [
-    set f_color [pcolor] of f
-  ]
 
-  let l_color black
-  if l != nobody [
-    set l_color [pcolor] of l
-  ]
 
-  let r_color black
-  if r != nobody [
-    set r_color [pcolor] of r
-  ]
-
-  ; SI [il y a de la route sur les trois cases]
-  if f_color = white and r_color = white and l_color = white [
-    let choice random (turn-left-influence + turn-right-influence + forward-influence)
-    if choice < turn-left-influence [
-      report l
-    ]
-
-    if choice < (turn-right-influence + turn-left-influence) [
-      report r
-    ]
-
-    report f
-  ]
-
-  ; SI [il y a de la route devant et à droite uniquement]
-  if f_color = white and r_color = white and l_color = black [
-    let choice random (turn-right-influence + forward-influence)
-    if choice < turn-right-influence [
-      report r
-    ]
-
-    report f
-  ]
-
-  ; SI [il t a de la route devant et à gauche uniquement]
-  if f_color = white and r_color = black and l_color = white [
-    let choice random (turn-left-influence + forward-influence)
-    if choice < turn-left-influence [
-      report l
-    ]
-
-    report f
-  ]
-
-  ; SI [il y a de la route à gauche et à droite uniquement]
-  if f_color = black and r_color = white and l_color = white [
-    let choice random (turn-right-influence + turn-left-influence)
-    if choice < turn-right-influence [
-      report r
-    ]
-
-    report l
-  ]
-
-  ; ici, on sait qu'il y a uniquement un seul choix possible (de la route uniquement sur une des trois cases)
-  let dirs (patch-set f r l)  with [pcolor = white]
-  report one-of dirs
-end
-;#################################### /CAR ########################################
 ;##################################################################################
+;#################################### CAR #########################################
+; Initialisation d'une car
+to init-car [new-local] ; new-local est la maison par laquel sort la voiture
 
-; Fonction de mise à jour de l'histogramme de la direction des voitures
-to update-direction-plot
-  set-current-plot "Cars directions"
-  clear-plot
 
-  let counts table:make
-  table:put counts "Forward" go-forward
-  table:put counts "Right" turn-right
-  table:put counts "Left" turn-left
-  table:put counts "Backward" go-backward
+  ; Attribution de la maison de la voiture
+  set local new-local
 
-  let directions sort table:keys counts
-  let n length directions
-  set-plot-x-range 0 n
-  let step 0.05 ; tweak this to leave no gaps
-  (foreach directions range n [ [d i] ->
-    let y table:get counts d
-    let c hsb (i * 360 / n) 50 75
-    create-temporary-plot-pen d
-    set-plot-pen-mode 1 ; bar mode
-    set-plot-pen-color c
-    foreach (range 0 y step) [ _y -> plotxy i _y ]
-    set-plot-pen-color black
-    plotxy i y
-    set-plot-pen-color c ; to get the right color in the legend
-  ])
+  ; sélectionner morceau de route où la voiture se place devant sa maison
+  let road-available [neighbors4 with [pcolor = white]] of local
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+
+  ; uniquement pour l'affichage
+  set label ""
+  set size 2
+end
+
+to car-decide
+  advance
+  let near-houses houses-on neighbors4
+
+  if any? near-houses with [self = [local] of myself] [
+    car-interact-local
+  ]
+end
+
+; Fonction appelée quand une voiture arrive devant sa maison (rentre chez lui en gros)
+to car-interact-local
+  ask local [set occupation (occupation + 1)]
+  die
+end
+
+
+
+;##################################################################################
+;#################################### HOUSE #######################################
+; initialisation d'une house
+to init-house
+  set shape "house"
+  set size 1
+
+  ; Pour éviter qu'une maison soit grise (car le gris est la couleur d'une house morte)
+  if color = grey [
+    set color blue
+  ]
+
+  ; nombre d'habitants de la maison entre 1 et nbOccupations
+  set occupation (random (nb-occupation) + 1)
+
+  ; initialiser les capacités en eau et elec
+  set elec elec-max
+  set water water-max
+
+  ; affichage
+  if display-occupation [
+    set label occupation
+  ]
+
+  ; bouger à un endroit juste à côté d'une route (personne d'autre dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+to house-decide
+  ; ne fait rien si la maison est morte (en gris)
+  if color = grey [
+    stop
+  ]
+
+  ; chier une car si je peux et si j'en ai le droit
+  if occupation > 0 and (random car-frequence) = 0 [
+    hatch-cars 1 [init-car myself]
+    set occupation (occupation - 1)
+  ]
+
+  ; Consommation d'elec
+  set elec (elec - occupation)
+
+  ; Consommation d'eau
+  set water (water - occupation)
+
+  ; mort si eau ou elec <= 0
+  if water <= 0 or elec <= 0 [
+    house-ko
+  ]
+
+  ; mettre à jour le nombre de cars affiché (si demandé)
+  if display-occupation [
+    set label occupation
+  ]
+end
+
+; fonction de mort d'une maison (pour cause de pénurie d'elec/eau)
+to house-ko
+  set color grey
+  set occupation 0 ; les habitants meurent tous
+  set water 0 ; plus d'eau car la maison est "détruite"
+  set elec 0 ; plus d'elec car la maison est "détruite"
+  ask cars with [local = myself] [die] ; mort directe des cars
+end
+
+
+
+;##################################################################################
+;#################################### POWER STATION ###############################
+; Initialisation d'une centrale électrique
+to init-power-station
+  set shape "power-station"
+  set size 1
+  ; bouger à un endroit juste à côté d'une route (sans aucune autre installation dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+; Fonction de décision d'une centrale électrique
+to power-station-decide
+  ; chier un elec-supply suivant la fréquence entrée dans le slider
+  if (random elec-frequence) = 0 [
+    hatch-elec-supplies 1 [init-elec-supply myself]
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### WATER TOWER ###############################
+; Initialisation d'un chateau d'eau
+to init-water-tower
+  set shape "water-tower"
+  set size 1
+  ; bouger à un endroit juste à côté d'une route (sans aucune autre installation dessus)
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+; Fonction de décision d'un chateau d'eau
+to water-tower-decide
+  ; chier un water-supply suivant la fréquence entrée dans le slider
+  if (random water-frequence) = 0 [
+    hatch-water-supplies 1 [init-water-supply myself]
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### ELEC SUPPLY #################################
+; Initialisation d'un elec supply
+to init-elec-supply [station] ; station est la centrale qui a créé le elec-supply
+  set shape "elec"
+  set size 1
+
+  ; sélectionner morceau de route où le elec-supply se place devant sa centrale
+  let road-available [neighbors4 with [pcolor = white]] of station
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+end
+
+; Fonction de décision d'un elec-supply
+to elec-supply-decide
+  ; avancer
+  advance
+
+  ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
+  let near-houses houses-on neighbors4
+  if any? near-houses with [elec < elec-max and color != grey] [
+    ask one-of near-houses with [elec < elec-max] [set elec elec-max]
+    die ; meurt après le premier rechargement
+  ]
+end
+
+
+
+;##################################################################################
+;#################################### WATER SUPPLY ################################
+; Initialisation d'un water supply
+to init-water-supply [tower] ; tower est le chateau d'eau qui a créé le water-supply
+  set shape "water"
+  set size 1
+
+  ; sélectionner morceau de route où le water-supply se place devant son château d'eau
+  let road-available [neighbors4 with [pcolor = white]] of tower
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+end
+
+; Fonction de décision d'un water-supply
+to water-supply-decide
+  ; avancer
+  advance
+
+  ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
+  let near-houses houses-on neighbors4
+  if any? near-houses with [water < water-max and color != grey] [
+    ask one-of near-houses with [water < water-max] [set water water-max]
+    die ; meurt après le premier rechargement
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -252,10 +333,10 @@ ticks
 30.0
 
 BUTTON
-38
-245
-328
-278
+266
+44
+598
+77
 Setup
 setup
 NIL
@@ -269,10 +350,10 @@ NIL
 1
 
 BUTTON
-361
-247
-594
-280
+614
+45
+928
+78
 Go
 go
 T
@@ -285,190 +366,151 @@ NIL
 NIL
 1
 
-SLIDER
-38
-70
-210
-103
-nbcars
-nbcars
+SWITCH
+11
+44
+245
+77
+display-occupation
+display-occupation
+0
 1
+-1000
+
+SLIDER
+766
+102
+940
+135
+nb-occupation
+nb-occupation
+0
 100
-3.0
+9.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-780
-120
-952
-153
-turn-left-influence
-turn-left-influence
-0
-100
-100.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-780
-172
-952
-205
-turn-right-influence
-turn-right-influence
-0
-100
-100.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-777
-220
-949
-253
-forward-influence
-forward-influence
-0
-100
-0.0
-1
-1
-NIL
-HORIZONTAL
-
-CHOOSER
-332
-122
-470
-167
-road-setup
-road-setup
-"grille" "city"
-0
-
-TEXTBOX
-664
-38
-979
-63
-Influence du choix de la direction d'une voiture
-15
-0.0
-1
-
-TEXTBOX
-665
-73
-899
-115
-Plus la valeur est haute, plus la direction liée sera choisie par rapport aux autres
-11
-0.0
-1
-
-TEXTBOX
-719
-126
-869
-144
-Gauche
-11
-0.0
-1
-
-TEXTBOX
-718
-178
-868
-196
-Droite
-11
-0.0
-1
-
-TEXTBOX
-708
-230
-858
-248
-Tout droit
-11
-0.0
-1
-
-TEXTBOX
-334
-39
-484
-58
-Topologie de la route
-15
-0.0
-1
-
-TEXTBOX
-334
-76
-535
-118
-\"grille\" = une route en grille\n\"city\" = configuration de la ville spéciale
-11
-0.0
-1
-
-TEXTBOX
-40
-35
-190
-54
-Nombre de voitures
-15
-0.0
-1
-
-PLOT
-20
-313
-969
-535
-Population de voiture en fonction du temps
-Temps
-Nombre de voitures
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot count cars"
-
-PLOT
-85
-580
-877
 767
-Cars directions
-Action réalisée
-Nombre de voitures
-0.0
-10.0
-0.0
-500.0
-true
-true
-"" "update-direction-plot"
-PENS
+141
+939
+174
+nb-houses
+nb-houses
+1
+100
+9.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+548
+219
+720
+252
+car-frequence
+car-frequence
+0
+500
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+251
+109
+482
+142
+water-max
+water-max
+10
+2000
+2000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+250
+157
+484
+190
+elec-max
+elec-max
+10
+2000
+2000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+550
+114
+723
+147
+water-frequence
+water-frequence
+0
+500
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+549
+165
+723
+198
+elec-frequence
+elec-frequence
+0
+500
+100.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+765
+192
+937
+225
+nb-power-stations
+nb-power-stations
+1
+100
+11.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+770
+234
+942
+267
+nb-water-towers
+nb-water-towers
+1
+100
+9.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -578,16 +620,26 @@ Line -16777216 false 210 90 195 30
 Line -16777216 false 90 90 105 30
 Polygon -1 true false 95 29 120 30 119 11
 
+car-rotatable
+true
+0
+Polygon -7500403 true true 300 180 279 164 261 144 240 135 226 132 213 106 203 84 185 63 159 50 135 50 75 60 0 150 0 165 0 225 300 225 300 180
+Circle -16777216 true false 180 180 90
+Circle -16777216 true false 30 180 90
+Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
+Circle -7500403 true true 47 195 58
+Circle -7500403 true true 195 195 58
+
 car-rotate
 true
 13
 Rectangle -2064490 true true 90 15 210 300
 Polygon -16777216 true false 105 90 195 90 180 150 120 150 105 90
 Rectangle -16777216 true false 105 240 195 255
-Rectangle -2674135 true false 90 270 120 300
-Rectangle -2674135 true false 180 270 210 300
-Rectangle -1184463 true false 180 15 210 45
-Rectangle -1184463 true false 90 15 120 45
+Rectangle -2674135 true false 90 285 105 300
+Rectangle -2674135 true false 195 285 210 300
+Rectangle -1184463 true false 195 15 210 30
+Rectangle -1184463 true false 90 15 105 30
 Rectangle -16777216 true false 195 120 210 210
 Rectangle -16777216 true false 90 120 105 210
 
@@ -618,6 +670,14 @@ dot
 false
 0
 Circle -7500403 true true 90 90 120
+
+elec
+true
+0
+Circle -16777216 true false 0 0 300
+Rectangle -1184463 true false 60 135 255 165
+Polygon -1184463 true false 30 165 90 0 195 0 90 165
+Polygon -1184463 true false 285 135 135 300 135 300 240 135
 
 face happy
 false
@@ -727,6 +787,17 @@ Polygon -7500403 true true 135 105 90 60 45 45 75 105 135 135
 Polygon -7500403 true true 165 105 165 135 225 105 255 45 210 60
 Polygon -7500403 true true 135 90 120 45 150 15 180 45 165 90
 
+power-station
+false
+0
+Polygon -7500403 true true 45 255 60 60 90 60 105 255
+Rectangle -7500403 true true 105 165 255 255
+Polygon -16777216 true false 120 165 120 195 180 165 105 165
+Polygon -16777216 true false 180 165 180 195 255 165 180 165
+Rectangle -16777216 true false 120 210 165 225
+Rectangle -16777216 true false 195 210 240 225
+Polygon -6459832 true false 75 45 90 30 120 30 135 15 150 15 135 30 120 45 105 45 90 60 75 45
+
 sheep
 false
 15
@@ -814,6 +885,23 @@ Polygon -10899396 true false 132 85 134 64 107 51 108 17 150 2 192 18 192 52 169
 Polygon -10899396 true false 85 204 60 233 54 254 72 266 85 252 107 210
 Polygon -7500403 true true 119 75 179 75 209 101 224 135 220 225 175 261 128 261 81 224 74 135 88 99
 
+water
+true
+0
+Polygon -13791810 true false 150 300 75 135 225 135
+Circle -13791810 true false 60 15 180
+
+water-tower
+false
+0
+Polygon -7500403 true true 90 75 150 0 210 75
+Rectangle -7500403 true true 75 165 225 180
+Rectangle -7500403 true true 90 90 210 150
+Polygon -7500403 true true 195 180 180 180 225 270 240 270 210 210
+Polygon -7500403 true true 105 180 120 180 75 270 60 270 90 210
+Polygon -7500403 true true 165 165 195 165 120 270 90 270 90 270
+Polygon -7500403 true true 135 165 105 165 180 270 210 270 210 270
+
 wheel
 false
 0
@@ -844,30 +932,6 @@ NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
-<experiments>
-  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="200"/>
-    <metric>count turtles</metric>
-    <enumeratedValueSet variable="nbcars">
-      <value value="3"/>
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="turn-left-influence">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="road-setup">
-      <value value="&quot;city&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="turn-right-influence">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forward-influence">
-      <value value="5"/>
-    </enumeratedValueSet>
-  </experiment>
-</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default
