@@ -222,10 +222,10 @@ NIL
 1
 
 SWITCH
-11
-44
-245
-77
+724
+160
+958
+193
 display-occupation
 display-occupation
 0
@@ -233,10 +233,10 @@ display-occupation
 -1000
 
 SLIDER
-615
-115
-869
-148
+353
+165
+607
+198
 nb-occupation
 nb-occupation
 0
@@ -248,10 +248,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-299
-113
-471
-146
+45
+162
+217
+195
 nb-houses
 nb-houses
 1
@@ -263,10 +263,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-13
-111
-185
-144
+49
+352
+221
+385
 car-frequence
 car-frequence
 0
@@ -278,10 +278,10 @@ NIL
 HORIZONTAL
 
 PLOT
-17
-214
-870
-418
+71
+414
+969
+762
 Taux d'occupation des maisons en fonction du temps
 Temps (en tick)
 Occupation des maisons
@@ -290,12 +290,82 @@ Occupation des maisons
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"Résidents dans leur maison" 1.0 0 -955883 true "" "plot sum [occupation] of houses"
+"population au repos" 1.0 0 -955883 true "" "plot sum [occupation] of houses"
 "Population totale" 1.0 0 -13840069 true "" "plot (sum [occupation] of houses + count cars)"
-"Population en mouvement" 1.0 0 -13345367 true "" "plot count cars"
+"population en mouvement" 1.0 0 -13345367 true "" "plot count cars"
+
+TEXTBOX
+47
+100
+197
+119
+Nombre de maisons
+15
+0.0
+1
+
+TEXTBOX
+47
+123
+197
+151
+Placées aléatoirement sur le terrain
+11
+0.0
+1
+
+TEXTBOX
+351
+99
+644
+137
+Nombre d'habitants maximum par maison
+15
+0.0
+1
+
+TEXTBOX
+353
+126
+503
+154
+nombre défini entre 0 et \"nb-occupation\" aléatoirement
+11
+0.0
+1
+
+TEXTBOX
+726
+99
+934
+156
+Afficher le nombre d'habitants par maison ?
+15
+0.0
+1
+
+TEXTBOX
+47
+267
+197
+305
+Fréquence de sortie des voitures
+15
+0.0
+1
+
+TEXTBOX
+45
+317
+351
+345
+Plus la valeur est petite, plus la fréquence est élevée
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?

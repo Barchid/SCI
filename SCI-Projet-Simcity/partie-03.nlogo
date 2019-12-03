@@ -1,5 +1,9 @@
 ; @author BARCHID Sami
 
+extensions [
+ table
+]
+
 ; breeds
 breed [cars car] ; voitures qui parcourent les routes
 breed [houses house] ; maisons contenant des habitants
@@ -70,12 +74,17 @@ end
 
 ; go loop
 to go
+  if nb-ticks-max != 0 and nb-ticks-max - 1 < ticks [
+   stop
+  ]
+
   ask cars [car-decide]
   ask elec-supplies [elec-supply-decide]
   ask water-supplies [water-supply-decide]
   ask houses [house-decide]
   ask power-stations [power-station-decide]
   ask water-towers [water-tower-decide]
+
   tick
 end
 
@@ -310,6 +319,35 @@ to water-supply-decide
     die ; meurt après le premier rechargement
   ]
 end
+
+
+; Fonction de mise à jour de l'histogramme des états des maisons
+to update-houses-hist
+  set-current-plot "État des maisons"
+  clear-plot
+
+  let counts table:make
+  table:put counts "Double manque" count houses with [elec < (elec-max / 10) and water < (water-max / 10)]
+  table:put counts "Manque électricité" count houses with [elec < (elec-max / 10) ]
+  table:put counts "Manque eau" count houses with [water < (water-max / 10)]
+  table:put counts "Tout va bien" count houses with [elec >= (elec-max / 10) and water >= (water-max / 10)]
+
+  let directions sort table:keys counts
+  let n length directions
+  set-plot-x-range 0 n
+  let step 0.05 ; tweak this to leave no gaps
+  (foreach directions range n [ [d i] ->
+    let y table:get counts d
+    let c hsb (i * 360 / n) 50 75
+    create-temporary-plot-pen d
+    set-plot-pen-mode 1 ; bar mode
+    set-plot-pen-color c
+    foreach (range 0 y step) [ _y -> plotxy i _y ]
+    set-plot-pen-color black
+    plotxy i y
+    set-plot-pen-color c ; to get the right color in the legend
+  ])
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 998
@@ -392,7 +430,7 @@ nb-occupation
 nb-occupation
 0
 100
-9.0
+7.0
 1
 1
 NIL
@@ -407,7 +445,7 @@ nb-houses
 nb-houses
 1
 100
-9.0
+100.0
 1
 1
 NIL
@@ -422,7 +460,7 @@ car-frequence
 car-frequence
 0
 500
-100.0
+80.0
 10
 1
 NIL
@@ -436,8 +474,8 @@ SLIDER
 water-max
 water-max
 10
-2000
-2000.0
+5000
+5000.0
 10
 1
 NIL
@@ -451,8 +489,8 @@ SLIDER
 elec-max
 elec-max
 10
-2000
-2000.0
+5000
+5000.0
 10
 1
 NIL
@@ -467,7 +505,7 @@ water-frequence
 water-frequence
 0
 500
-100.0
+20.0
 10
 1
 NIL
@@ -482,7 +520,7 @@ elec-frequence
 elec-frequence
 0
 500
-100.0
+20.0
 10
 1
 NIL
@@ -497,7 +535,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-11.0
+10.0
 1
 1
 NIL
@@ -512,11 +550,227 @@ nb-water-towers
 nb-water-towers
 1
 100
-9.0
+41.0
 1
 1
 NIL
 HORIZONTAL
+
+PLOT
+19
+289
+688
+632
+Population des maisons en fonction du temps
+Temps (ticks)
+Nombre de maisons
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Total" 1.0 0 -16777216 true "" "plot count houses"
+"Mortes" 1.0 0 -2674135 true "" "plot count houses with [color = grey]"
+"Vivantes" 1.0 0 -10899396 true "" "plot count houses with [color != grey]"
+
+MONITOR
+709
+289
+817
+334
+Maisons vivantes
+count houses with [color != grey]
+17
+1
+11
+
+MONITOR
+711
+356
+900
+401
+Maisons mortes
+count houses with [color = grey]
+17
+1
+11
+
+PLOT
+16
+929
+687
+1300
+Quantité de ressources en fonction du temps
+Temps (en ticks)
+Nombre de ressources
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Électricité" 1.0 0 -1184463 true "" "plot count elec-supplies"
+"Eau" 1.0 0 -13345367 true "" "plot count water-supplies"
+
+MONITOR
+718
+932
+936
+977
+Nombre d'électricités en déplacement
+count elec-supplies
+17
+1
+11
+
+MONITOR
+718
+1001
+937
+1046
+Nombre d'eau en déplacement
+count water-supplies
+17
+1
+11
+
+SLIDER
+13
+99
+185
+132
+nb-ticks-max
+nb-ticks-max
+0
+100000
+50000.0
+100
+1
+NIL
+HORIZONTAL
+
+PLOT
+963
+799
+1719
+1080
+Démographie
+Temps (ticks)
+Nombre d'habitants
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"À la maison" 1.0 0 -5825686 true "" "plot sum [occupation] of houses"
+"Sur la route" 1.0 0 -11221820 true "" "plot count cars"
+"Total" 1.0 0 -955883 true "" "plot count cars + sum [occupation] of houses"
+
+MONITOR
+1729
+802
+1835
+847
+Population totale
+sum [occupation] of houses + count cars
+17
+1
+11
+
+MONITOR
+1728
+874
+1890
+919
+Population en déplacement
+count cars
+17
+1
+11
+
+MONITOR
+1727
+941
+1860
+986
+Population sédentaire
+sum [occupation] of houses
+17
+1
+11
+
+PLOT
+16
+658
+689
+893
+État des maisons
+Temps (ticks)
+Nombre de maisons
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Double manque" 1.0 0 -2674135 true "" "plot count houses with [elec < (elec-max / 10) and water < (water-max / 10)]"
+"Manque électricité" 1.0 0 -1184463 true "" "plot count houses with [elec < (elec-max / 10)]"
+"Manque eau" 1.0 0 -13791810 true "" "plot count houses with [water < (water-max / 10)]"
+"Tout va bien" 1.0 0 -13840069 true "" "plot count houses with [elec >= (elec-max / 10) and water >= (water-max / 10)]"
+
+MONITOR
+704
+662
+865
+707
+Maisons manque électricité
+count houses with [elec < (elec-max / 10)]
+17
+1
+11
+
+MONITOR
+706
+720
+834
+765
+Maisons manque eau
+count houses with [water < (water-max / 10)]
+17
+1
+11
+
+MONITOR
+706
+786
+873
+831
+Maisons manque ressources
+count houses with [elec < (elec-max / 10) or water < (water-max / 10)]
+17
+1
+11
+
+MONITOR
+707
+845
+834
+890
+Maisons tout va bien
+count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
