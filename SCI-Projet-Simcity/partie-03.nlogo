@@ -562,7 +562,7 @@ water-frequence
 water-frequence
 0
 100
-4.0
+0.0
 1
 1
 NIL
@@ -577,7 +577,7 @@ elec-frequence
 elec-frequence
 0
 100
-4.0
+0.0
 1
 1
 NIL
@@ -830,13 +830,13 @@ count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
 11
 
 SWITCH
-23
-179
-195
-212
+13
+193
+185
+226
 bias-correction?
 bias-correction?
-1
+0
 1
 -1000
 

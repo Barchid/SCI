@@ -103,6 +103,9 @@ end
 
 ; go loop
 to go
+  if nb-days-max != 0 and nb-days-max - 1 < get-day [
+   stop
+  ]
 
   ask clocks [clock-decide]
   ask inhabitants [inhabitant-decide]
@@ -546,7 +549,7 @@ to elec-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [elec < elec-max and color != grey] [
+  if any? near-houses with [elec < 0elec-max and color != grey] [
     ask one-of near-houses with [elec < elec-max] [set elec elec-max]
     die ; meurt après le premier rechargement
   ]
@@ -1014,7 +1017,7 @@ nb-days-max
 nb-days-max
 0
 1825
-365.0
+70.0
 1
 1
 NIL

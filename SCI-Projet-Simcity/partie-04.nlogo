@@ -549,8 +549,8 @@ to elec-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [elec < elec-max and color != grey] [
-    ask one-of near-houses with [elec < elec-max] [set elec elec-max]
+  if any? near-houses with [elec < 0.7 * elec-max and color != grey] [
+    ask one-of near-houses with [elec < 0.7 * elec-max] [set elec elec-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -583,8 +583,8 @@ to water-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [water < water-max and color != grey] [
-    ask one-of near-houses with [water < water-max] [set water water-max]
+  if any? near-houses with [water < 0.7 * water-max and color != grey] [
+    ask one-of near-houses with [water < 0.7 * water-max] [set water water-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -756,7 +756,7 @@ nb-houses
 nb-houses
 1
 100
-10.0
+1.0
 1
 1
 NIL
@@ -801,7 +801,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-4.0
+10.0
 1
 1
 NIL
@@ -816,7 +816,7 @@ nb-water-towers
 nb-water-towers
 1
 100
-4.0
+10.0
 1
 1
 NIL
@@ -861,7 +861,7 @@ nb-occupations
 nb-occupations
 1
 100
-21.0
+100.0
 1
 1
 NIL
@@ -949,7 +949,7 @@ SWITCH
 657
 display-job-offers
 display-job-offers
-1
+0
 1
 -1000
 
@@ -1017,7 +1017,7 @@ nb-days-max
 nb-days-max
 0
 1825
-6.0
+70.0
 1
 1
 NIL

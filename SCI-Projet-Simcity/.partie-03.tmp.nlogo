@@ -341,8 +341,8 @@ to elec-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [elec < 0. * elec-max and color != grey] [
-    ask one-of near-houses with [elec < 0.9 * elec-max] [set elec elec-max]
+  if any? near-houses with [elec < 0.7 * elec-max and color != grey] [
+    ask one-of near-houses with [elec < 0.7 * elec-max] [set elec elec-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -371,8 +371,8 @@ to water-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [water < 0.9 * water-max and color != grey] [
-    ask one-of near-houses with [water < 0.9 * water-max] [set water water-max]
+  if any? near-houses with [water < 0.7 * water-max and color != grey] [
+    ask one-of near-houses with [water < 0.7 * water-max] [set water water-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -562,7 +562,7 @@ water-frequence
 water-frequence
 0
 100
-4.0
+0.0
 1
 1
 NIL
@@ -577,7 +577,7 @@ elec-frequence
 elec-frequence
 0
 100
-4.0
+0.0
 1
 1
 NIL
@@ -830,10 +830,10 @@ count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
 11
 
 SWITCH
-23
-179
-195
-212
+13
+193
+185
+226
 bias-correction?
 bias-correction?
 1
