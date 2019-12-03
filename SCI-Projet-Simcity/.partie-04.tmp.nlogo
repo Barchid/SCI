@@ -103,6 +103,7 @@ end
 
 ; go loop
 to go
+
   ask clocks [clock-decide]
   ask inhabitants [inhabitant-decide]
   ask elec-supplies [elec-supply-decide]
@@ -304,18 +305,6 @@ to inhabitant-go-home
   inhabitant-leave employer
   set destination one-of [neighbors4 with [pcolor = white]] of local
   set building-destination local
-end
-
-to test-dist
-  ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
-end
-
-to test-2
-  ask patches [set plabel pxcor]
-end
-
-to test-color
-
 end
 
 ; Fonction appelée quand le inhabitant se fait virer de son travail
@@ -710,13 +699,6 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
-OUTPUT
-0
-0
-0
-0
-11
-
 BUTTON
 266
 44
@@ -957,23 +939,6 @@ power-station-firing-frequence
 NIL
 HORIZONTAL
 
-BUTTON
-432
-212
-510
-245
-NIL
-test-dist
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SWITCH
 26
 624
@@ -1007,45 +972,11 @@ display-water-supplies
 1
 -1000
 
-BUTTON
-461
-272
-526
-305
-NIL
-test-2\n
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-550
-361
-635
-394
-NIL
-test-color
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 MONITOR
-553
-251
-676
-296
+543
+171
+724
+216
 Heure de la journée
 get-hour
 17
@@ -1053,10 +984,10 @@ get-hour
 11
 
 MONITOR
-557
-189
-728
-234
+543
+111
+725
+156
 Numéro de tier de la journée
 get-day-tier
 17
@@ -1064,15 +995,30 @@ get-day-tier
 11
 
 MONITOR
-508
-659
-593
-704
+542
+226
+724
+271
 Jours passés
 get-day
 17
 1
 11
+
+SLIDER
+10
+92
+182
+125
+nb-days-max
+nb-days-max
+0
+1825
+365.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

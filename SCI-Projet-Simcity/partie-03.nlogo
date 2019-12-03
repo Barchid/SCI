@@ -38,7 +38,64 @@ to setup
   ; Création des châteaux d'eau
   create-water-towers nb-water-towers [init-water-tower]
 
+  ; Correction du biais de départ
+  if(bias-correction?) [
+    place-on-road
+  ]
+
   reset-ticks
+end
+
+; fonction lancée pour tenter de corriger le biais de départ
+; Donne une chance de placer des elec-supplies, water-supplies et des cars
+to place-on-road
+  repeat int(elec-max / 10 + water-max / 10) [
+    place-cars-on-road
+    place-power-stations-on-road
+    place-water-towers-on-road
+  ]
+end
+
+to place-cars-on-road
+  let houss [self] of houses
+  foreach houss [ hous ->
+    let occ [occupation] of hous
+    if occ > 0 and random car-frequence = 0 [
+      ; placer voiture
+      create-cars 1 [
+        init-car hous
+        move-to one-of patches with [pcolor = white]
+        face one-of neighbors4 with [pcolor = white]
+      ]
+      ask hous [set occupation occupation - 1]
+    ]
+  ]
+end
+
+to place-power-stations-on-road
+  let powers [self] of power-stations
+  foreach powers [ power ->
+    if random elec-frequence = 0 [
+      create-elec-supplies 1 [
+        init-elec-supply power
+        move-to one-of patches with [pcolor = white]
+        face one-of neighbors4 with [pcolor = white]
+      ]
+    ]
+  ]
+end
+
+to place-water-towers-on-road
+  let towers [self] of water-towers
+  foreach towers [ tower ->
+    if random water-frequence = 0 [
+      create-water-supplies 1 [
+        init-water-supply tower
+        move-to one-of patches with [pcolor = white]
+        face one-of neighbors4 with [pcolor = white]
+      ]
+    ]
+  ]
 end
 
 ; construire les patchs pour faire la route
@@ -284,8 +341,8 @@ to elec-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [elec < elec-max and color != grey] [
-    ask one-of near-houses with [elec < elec-max] [set elec elec-max]
+  if any? near-houses with [elec < 0.7 * elec-max and color != grey] [
+    ask one-of near-houses with [elec < 0.7 * elec-max] [set elec elec-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -314,8 +371,8 @@ to water-supply-decide
 
   ; Recharger une maison proche (pas morte) dans le besoin (si elle existe)
   let near-houses houses-on neighbors4
-  if any? near-houses with [water < water-max and color != grey] [
-    ask one-of near-houses with [water < water-max] [set water water-max]
+  if any? near-houses with [water < 0.7 * water-max and color != grey] [
+    ask one-of near-houses with [water < 0.7 * water-max] [set water water-max]
     die ; meurt après le premier rechargement
   ]
 end
@@ -430,7 +487,7 @@ nb-occupation
 nb-occupation
 0
 100
-7.0
+50.0
 1
 1
 NIL
@@ -459,9 +516,9 @@ SLIDER
 car-frequence
 car-frequence
 0
-500
-80.0
-10
+100
+100.0
+1
 1
 NIL
 HORIZONTAL
@@ -504,9 +561,9 @@ SLIDER
 water-frequence
 water-frequence
 0
-500
-20.0
-10
+100
+4.0
+1
 1
 NIL
 HORIZONTAL
@@ -519,9 +576,9 @@ SLIDER
 elec-frequence
 elec-frequence
 0
-500
-20.0
-10
+100
+4.0
+1
 1
 NIL
 HORIZONTAL
@@ -535,7 +592,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-10.0
+2.0
 1
 1
 NIL
@@ -550,7 +607,7 @@ nb-water-towers
 nb-water-towers
 1
 100
-41.0
+2.0
 1
 1
 NIL
@@ -742,7 +799,7 @@ count houses with [elec < (elec-max / 10)]
 MONITOR
 706
 720
-834
+868
 765
 Maisons manque eau
 count houses with [water < (water-max / 10)]
@@ -753,7 +810,7 @@ count houses with [water < (water-max / 10)]
 MONITOR
 706
 786
-873
+894
 831
 Maisons manque ressources
 count houses with [elec < (elec-max / 10) or water < (water-max / 10)]
@@ -764,13 +821,24 @@ count houses with [elec < (elec-max / 10) or water < (water-max / 10)]
 MONITOR
 707
 845
-834
+875
 890
 Maisons tout va bien
 count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
 17
 1
 11
+
+SWITCH
+23
+179
+195
+212
+bias-correction?
+bias-correction?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
