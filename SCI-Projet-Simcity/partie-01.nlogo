@@ -85,6 +85,9 @@ end
 
 ; go loop
 to go
+  if nb-ticks-max != 0 and nb-ticks-max - 1 < ticks [
+   stop
+  ]
   ask cars [decide]
   tick
 end
@@ -252,10 +255,10 @@ ticks
 30.0
 
 BUTTON
-38
-245
-328
-278
+19
+269
+309
+302
 Setup
 setup
 NIL
@@ -269,10 +272,10 @@ NIL
 1
 
 BUTTON
-361
-247
-594
-280
+342
+271
+575
+304
 Go
 go
 T
@@ -353,7 +356,7 @@ CHOOSER
 road-setup
 road-setup
 "grille" "city"
-0
+1
 
 TEXTBOX
 664
@@ -469,6 +472,31 @@ true
 true
 "" "update-direction-plot"
 PENS
+
+SLIDER
+17
+210
+499
+243
+nb-ticks-max
+nb-ticks-max
+0
+100000
+2000.0
+100
+1
+ticks
+HORIZONTAL
+
+TEXTBOX
+20
+188
+330
+216
+Durée de la simulation (0 pour une simulation infinie)
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?

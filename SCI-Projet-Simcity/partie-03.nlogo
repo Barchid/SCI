@@ -468,10 +468,10 @@ NIL
 1
 
 SWITCH
-11
-44
-245
-77
+12
+43
+246
+76
 display-occupation
 display-occupation
 0
@@ -479,10 +479,10 @@ display-occupation
 -1000
 
 SLIDER
-766
-102
-940
-135
+529
+134
+749
+167
 nb-occupation
 nb-occupation
 0
@@ -494,10 +494,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-767
-141
-939
-174
+525
+228
+746
+261
 nb-houses
 nb-houses
 1
@@ -509,10 +509,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-548
-219
-720
-252
+797
+138
+969
+171
 car-frequence
 car-frequence
 0
@@ -524,40 +524,40 @@ NIL
 HORIZONTAL
 
 SLIDER
-251
-109
+247
+137
+478
+170
+water-max
+water-max
+10
+5000
+5000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+247
+229
+481
+262
+elec-max
+elec-max
+10
+5000
+5000.0
+10
+1
+NIL
+HORIZONTAL
+
+SLIDER
+247
+314
 482
-142
-water-max
-water-max
-10
-5000
-5000.0
-10
-1
-NIL
-HORIZONTAL
-
-SLIDER
-250
-157
-484
-190
-elec-max
-elec-max
-10
-5000
-5000.0
-10
-1
-NIL
-HORIZONTAL
-
-SLIDER
-550
-114
-723
-147
+347
 water-frequence
 water-frequence
 0
@@ -569,10 +569,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-549
-165
-723
-198
+237
+399
+486
+432
 elec-frequence
 elec-frequence
 0
@@ -584,25 +584,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-765
-192
-937
-225
+525
+313
+747
+346
 nb-power-stations
 nb-power-stations
 1
 100
-2.0
+1.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-770
-234
-942
-267
+525
+399
+747
+432
 nb-water-towers
 nb-water-towers
 1
@@ -614,10 +614,10 @@ NIL
 HORIZONTAL
 
 PLOT
-19
-289
-688
-632
+12
+455
+681
+798
 Population des maisons en fonction du temps
 Temps (ticks)
 Nombre de maisons
@@ -634,10 +634,10 @@ PENS
 "Vivantes" 1.0 0 -10899396 true "" "plot count houses with [color != grey]"
 
 MONITOR
-709
-289
-817
-334
+702
+455
+810
+500
 Maisons vivantes
 count houses with [color != grey]
 17
@@ -645,10 +645,10 @@ count houses with [color != grey]
 11
 
 MONITOR
-711
-356
-900
-401
+704
+522
+893
+567
 Maisons mortes
 count houses with [color = grey]
 17
@@ -656,10 +656,10 @@ count houses with [color = grey]
 11
 
 PLOT
-16
-929
-687
-1300
+9
+1095
+680
+1466
 Quantité de ressources en fonction du temps
 Temps (en ticks)
 Nombre de ressources
@@ -675,10 +675,10 @@ PENS
 "Eau" 1.0 0 -13345367 true "" "plot count water-supplies"
 
 MONITOR
-718
-932
-936
-977
+711
+1098
+929
+1143
 Nombre d'électricités en déplacement
 count elec-supplies
 17
@@ -686,10 +686,10 @@ count elec-supplies
 11
 
 MONITOR
-718
-1001
-937
-1046
+711
+1167
+930
+1212
 Nombre d'eau en déplacement
 count water-supplies
 17
@@ -697,10 +697,10 @@ count water-supplies
 11
 
 SLIDER
-13
-99
-185
-132
+11
+139
+183
+172
 nb-ticks-max
 nb-ticks-max
 0
@@ -765,10 +765,10 @@ sum [occupation] of houses
 11
 
 PLOT
-16
-658
-689
-893
+9
+824
+682
+1059
 État des maisons
 Temps (ticks)
 Nombre de maisons
@@ -786,10 +786,10 @@ PENS
 "Tout va bien" 1.0 0 -13840069 true "" "plot count houses with [elec >= (elec-max / 10) and water >= (water-max / 10)]"
 
 MONITOR
-704
-662
-865
-707
+697
+828
+858
+873
 Maisons manque électricité
 count houses with [elec < (elec-max / 10)]
 17
@@ -797,10 +797,10 @@ count houses with [elec < (elec-max / 10)]
 11
 
 MONITOR
-706
-720
-868
-765
+699
+886
+861
+931
 Maisons manque eau
 count houses with [water < (water-max / 10)]
 17
@@ -808,10 +808,10 @@ count houses with [water < (water-max / 10)]
 11
 
 MONITOR
-706
-786
-894
-831
+699
+952
+887
+997
 Maisons manque ressources
 count houses with [elec < (elec-max / 10) or water < (water-max / 10)]
 17
@@ -819,10 +819,10 @@ count houses with [elec < (elec-max / 10) or water < (water-max / 10)]
 11
 
 MONITOR
-707
-845
-875
-890
+700
+1011
+868
+1056
 Maisons tout va bien
 count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
 17
@@ -831,14 +831,134 @@ count houses with [elec > (elec-max / 10) and water > (water-max / 10)]
 
 SWITCH
 13
-193
+229
 185
-226
+262
 bias-correction?
 bias-correction?
-0
+1
 1
 -1000
+
+TEXTBOX
+13
+11
+163
+39
+Afficher l'occupation des maisons ?
+11
+0.0
+1
+
+TEXTBOX
+15
+108
+165
+136
+Durée de la simulation (0 pour une simulation infinie)
+11
+0.0
+1
+
+TEXTBOX
+16
+201
+166
+229
+Activer la correction du biais de départ
+11
+0.0
+1
+
+TEXTBOX
+248
+199
+472
+227
+Stock d'éléctricité pour une maison
+11
+0.0
+1
+
+TEXTBOX
+250
+118
+400
+136
+Stock d'eau pour une maison
+11
+0.0
+1
+
+TEXTBOX
+249
+286
+399
+304
+Fréquence de production d'eau
+11
+0.0
+1
+
+TEXTBOX
+241
+369
+464
+397
+Fréquence de production d'électricité
+11
+0.0
+1
+
+TEXTBOX
+797
+107
+947
+135
+Fréquence de sortie des voitures
+11
+0.0
+1
+
+TEXTBOX
+531
+111
+765
+139
+Nombre maximal d'habitants dans une maison
+11
+0.0
+1
+
+TEXTBOX
+528
+205
+678
+223
+Nombre de maisons
+11
+0.0
+1
+
+TEXTBOX
+528
+292
+710
+320
+Nombre de centrales électriques
+11
+0.0
+1
+
+TEXTBOX
+527
+379
+677
+397
+Nombre de châteaux d'eau
+11
+0.0
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
