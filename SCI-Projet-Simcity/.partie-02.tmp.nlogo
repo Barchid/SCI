@@ -1,42 +1,27 @@
 ; @author BARCHID Sami
-extensions [table]
 
-globals [
- ; variables globales pour décrire les nombres de fois que les voitures choisissent l'une ou l'autre directions
- turn-left
- turn-right
- go-forward
- go-backward
+; breeds
+breed [cars car]
+breed [houses house]
+
+; variables
+houses-own [
+  occupation ; nombre d'occupants de la maison
 ]
 
-breed [cars car]
-
 cars-own [
-  direction-choice ; variable retenant le choix de direction de la voiture pour le tour courant
+  local ; maison occupée par la voiture
 ]
 
 ;##################################################################################
 ;#################################### SETUP #######################################
 to setup
   ca
+  build-road
 
-  ; initialisation des variables globales pour les stats
-  set turn-left 0
-  set turn-right 0
-  set go-forward 0
-  set go-backward 0
+  ; Création des houses
+  create-houses nb-houses [init-house]
 
-  ; choix de la construction de la route
-  ifelse road-setup = "city" [
-    build-road
-  ]
-  [
-    ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
-  ]
-
-
-  ; Création des cars
-  create-cars nbcars [init-car]
   reset-ticks
 end
 
@@ -71,35 +56,50 @@ to build-road
   ask patches with [pxcor >= -2 and pxcor <= 2 and pycor >= -2 and pycor <= 2] [set pcolor black]
 end
 
-; Initialisation d'une car
-to init-car
-  set direction-choice nobody ; pas encore bougé donc pas de direction choisie
-  set shape "car top"
-  if (color = white) [ set color blue ] ; éviter qu'une voiture soi de la même couleur que la route (on voit mal après)
-  move-to one-of patches with [pcolor = white]
-  face one-of neighbors4 with [pcolor = white]
-  set size 2
-end
-;##################################################################################
-;#################################### /SETUP ######################################
-
 ; go loop
 to go
   if nb-ticks-max != 0 and nb-ticks-max - 1 < ticks [
    stop
   ]
-  ask cars [decide]
+
+  ask cars [car-decide]
+  ask houses [house-decide]
   tick
 end
 
 
+
 ;##################################################################################
 ;#################################### CAR #########################################
-to decide
-  set direction-choice nobody ; réinitialisation du choix de direction pour le tour
-  advance
+; Initialisation d'une car
+to init-car [new-local]
+  set shape "car top"
+
+  ; Attribution de la maison de la voiture
+  set local new-local
+
+  ; sélectionner morceau de route où la voiture se place devant sa maison
+  let road-available [neighbors4 with [pcolor = white]] of local
+  move-to one-of road-available
+
+  ; Se diriger là où on veut
+  face one-of neighbors4 with [pcolor = white]
+
+  ; uniquement pour l'affichage
+  set label ""
+  set size 2
 end
 
+to car-decide
+  advance
+  let near-houses houses-on neighbors4
+
+  if any? near-houses with [self = [local] of myself] [
+    car-interact-local
+  ]
+end
+
+; Fonction permettant à une voiture d'avancer sur la route
 to advance
   let f patch-ahead 1
   let r patch-right-and-ahead 90 1
@@ -110,18 +110,9 @@ to advance
   ; SI [je peux avancer quelque part]
   ifelse any? dirs
     [ ; Je choisis une direction au hasard
-      let dir choose-direction f r l
-
-      ; retenir le choix de direction pris (pour les stats)
-      if dir = f [set direction-choice "Forward" set go-forward (go-forward + 1)]
-      if dir = r [set direction-choice "Right" set turn-right (turn-right + 1)]
-      if dir = l [set direction-choice "Left" set turn-left (turn-left + 1)]
-
-      move-to dir
+      move-to one-of dirs
     ]
     [ ; je rebrousse chemin (cul de sac oblige)
-      set direction-choice "Backward"
-      set go-backward (go-backward + 1)
       move-to patch-left-and-ahead 180 1
       left 180
     ]
@@ -130,101 +121,47 @@ to advance
   if (patch-here = l) [left 90]
 end
 
-; Fonction qui choisit la direction (parmis les trois patches en paramètres) vers laquelle la car va aller
-; retourne le patch choisi parmis les trois en paramètres
-to-report choose-direction [f r l]
-  let f_color black
-  if f != nobody [
-    set f_color [pcolor] of f
-  ]
-
-  let l_color black
-  if l != nobody [
-    set l_color [pcolor] of l
-  ]
-
-  let r_color black
-  if r != nobody [
-    set r_color [pcolor] of r
-  ]
-
-  ; SI [il y a de la route sur les trois cases]
-  if f_color = white and r_color = white and l_color = white [
-    let choice random (turn-left-influence + turn-right-influence + forward-influence)
-    if choice < turn-left-influence [
-      report l
-    ]
-
-    if choice < (turn-right-influence + turn-left-influence) [
-      report r
-    ]
-
-    report f
-  ]
-
-  ; SI [il y a de la route devant et à droite uniquement]
-  if f_color = white and r_color = white and l_color = black [
-    let choice random (turn-right-influence + forward-influence)
-    if choice < turn-right-influence [
-      report r
-    ]
-
-    report f
-  ]
-
-  ; SI [il t a de la route devant et à gauche uniquement]
-  if f_color = white and r_color = black and l_color = white [
-    let choice random (turn-left-influence + forward-influence)
-    if choice < turn-left-influence [
-      report l
-    ]
-
-    report f
-  ]
-
-  ; SI [il y a de la route à gauche et à droite uniquement]
-  if f_color = black and r_color = white and l_color = white [
-    let choice random (turn-right-influence + turn-left-influence)
-    if choice < turn-right-influence [
-      report r
-    ]
-
-    report l
-  ]
-
-  ; ici, on sait qu'il y a uniquement un seul choix possible (de la route uniquement sur une des trois cases)
-  let dirs (patch-set f r l)  with [pcolor = white]
-  report one-of dirs
+; Fonction appelée quand une voiture arrive devant sa maison (rentre chez lui en gros)
+to car-interact-local
+  ask local [set occupation (occupation + 1)]
+  die
 end
-;#################################### /CAR ########################################
+
+
+
 ;##################################################################################
+;#################################### HOUSE #######################################
+; initialisation d'une house
+to init-house
+  set shape "house"
+  set size 1
 
-; Fonction de mise à jour de l'histogramme de la direction des voitures
-to update-direction-plot
-  set-current-plot "Cars directions"
-  clear-plot
+  ; nombre d'habitants de la maison entre 1 et nbOccupations
+  set occupation (random (nb-occupation) + 1)
 
-  let counts table:make
-  table:put counts "Forward" go-forward
-  table:put counts "Right" turn-right
-  table:put counts "Left" turn-left
-  table:put counts "Backward" go-backward
+  if display-occupation [
+    set label occupation
+  ]
 
-  let directions sort table:keys counts
-  let n length directions
-  set-plot-x-range 0 n
-  let step 0.05 ; tweak this to leave no gaps
-  (foreach directions range n [ [d i] ->
-    let y table:get counts d
-    let c hsb (i * 360 / n) 50 75
-    create-temporary-plot-pen d
-    set-plot-pen-mode 1 ; bar mode
-    set-plot-pen-color c
-    foreach (range 0 y step) [ _y -> plotxy i _y ]
-    set-plot-pen-color black
-    plotxy i y
-    set-plot-pen-color c ; to get the right color in the legend
-  ])
+  ; bouger à un endroit juste à côté d'une route
+  move-to one-of patches with [pcolor = black and (any? neighbors4 with [pcolor = white]) and (count turtles-here = 0)]
+end
+
+to house-decide
+  ; Lancer l'interaction pour les voitures devant moi
+;  ask cars-on neighbors4 [car-interact-house myself]
+
+
+  ; chier une car si je peux et si j'en ai le droit
+  if occupation > 0 and (random car-frequence) = 0 [
+    hatch-cars 1 [init-car myself]
+    set occupation (occupation - 1)
+  ]
+
+  ; mettre à jour le nombre de cars affiché (si demandé)
+  if display-occupation [
+    set label occupation
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -254,11 +191,21 @@ GRAPHICS-WINDOW
 ticks
 30.0
 
+CHOOSER
+0
+0
+0
+0
+NIL
+NIL
+
+0
+
 BUTTON
-19
-269
-309
-302
+266
+44
+598
+77
 Setup
 setup
 NIL
@@ -272,10 +219,10 @@ NIL
 1
 
 BUTTON
-342
-271
-575
-304
+614
+45
+928
+78
 Go
 go
 T
@@ -288,28 +235,54 @@ NIL
 NIL
 1
 
-SLIDER
-38
-70
-210
-103
-nbcars
-nbcars
+SWITCH
+724
+160
+958
+193
+display-occupation
+display-occupation
+0
 1
+-1000
+
+SLIDER
+353
+165
+607
+198
+nb-occupation
+nb-occupation
+0
 100
-3.0
+10.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-780
-120
-952
-153
-turn-left-influence
-turn-left-influence
+45
+162
+217
+195
+nb-houses
+nb-houses
+1
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+49
+352
+221
+385
+car-frequence
+car-frequence
 0
 100
 100.0
@@ -317,182 +290,117 @@ turn-left-influence
 1
 NIL
 HORIZONTAL
-
-SLIDER
-780
-172
-952
-205
-turn-right-influence
-turn-right-influence
-0
-100
-100.0
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-777
-220
-949
-253
-forward-influence
-forward-influence
-0
-100
-0.0
-1
-1
-NIL
-HORIZONTAL
-
-CHOOSER
-332
-122
-470
-167
-road-setup
-road-setup
-"grille" "city"
-1
-
-TEXTBOX
-664
-38
-979
-63
-Influence du choix de la direction d'une voiture
-15
-0.0
-1
-
-TEXTBOX
-665
-73
-899
-115
-Plus la valeur est haute, plus la direction liée sera choisie par rapport aux autres
-11
-0.0
-1
-
-TEXTBOX
-719
-126
-869
-144
-Gauche
-11
-0.0
-1
-
-TEXTBOX
-718
-178
-868
-196
-Droite
-11
-0.0
-1
-
-TEXTBOX
-708
-230
-858
-248
-Tout droit
-11
-0.0
-1
-
-TEXTBOX
-334
-39
-484
-58
-Topologie de la route
-15
-0.0
-1
-
-TEXTBOX
-334
-76
-535
-118
-\"grille\" = une route en grille\n\"city\" = configuration de la ville spéciale
-11
-0.0
-1
-
-TEXTBOX
-40
-35
-190
-54
-Nombre de voitures
-15
-0.0
-1
 
 PLOT
-20
-313
+71
+414
 969
-535
-Population de voiture en fonction du temps
-Temps
-Nombre de voitures
+762
+Taux d'occupation des maisons en fonction du temps
+Temps (en tick)
+Occupation des maisons
 0.0
-10.0
+1000.0
 0.0
 10.0
 true
-false
+true
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count cars"
+"population au repos" 1.0 0 -955883 true "" "plot sum [occupation] of houses"
+"Population totale" 1.0 0 -13840069 true "" "plot (sum [occupation] of houses + count cars)"
+"population en mouvement" 1.0 0 -13345367 true "" "plot count cars"
 
-PLOT
-85
-580
-877
-767
-Cars directions
-Action réalisée
-Nombre de voitures
+TEXTBOX
+47
+100
+197
+119
+Nombre de maisons
+15
 0.0
-10.0
+1
+
+TEXTBOX
+47
+123
+197
+151
+Placées aléatoirement sur le terrain
+11
 0.0
-500.0
-true
-true
-"" "update-direction-plot"
-PENS
+1
+
+TEXTBOX
+351
+99
+644
+137
+Nombre d'habitants maximum par maison
+15
+0.0
+1
+
+TEXTBOX
+353
+126
+503
+154
+nombre défini entre 0 et \"nb-occupation\" aléatoirement
+11
+0.0
+1
+
+TEXTBOX
+726
+99
+934
+156
+Afficher le nombre d'habitants par maison ?
+15
+0.0
+1
+
+TEXTBOX
+47
+267
+197
+305
+Fréquence de sortie des voitures
+15
+0.0
+1
+
+TEXTBOX
+45
+317
+351
+345
+Plus la valeur est petite, plus la fréquence est élevée
+11
+0.0
+1
 
 SLIDER
-17
-210
-499
-243
+510
+336
+822
+369
 nb-ticks-max
 nb-ticks-max
 0
 100000
-100000.0
+5000.0
 100
 1
 ticks
 HORIZONTAL
 
 TEXTBOX
-20
-188
-330
-216
+511
+312
+800
+340
 Durée de la simulation (0 pour une simulation infinie)
 11
 0.0
@@ -606,16 +514,26 @@ Line -16777216 false 210 90 195 30
 Line -16777216 false 90 90 105 30
 Polygon -1 true false 95 29 120 30 119 11
 
+car-rotatable
+true
+0
+Polygon -7500403 true true 300 180 279 164 261 144 240 135 226 132 213 106 203 84 185 63 159 50 135 50 75 60 0 150 0 165 0 225 300 225 300 180
+Circle -16777216 true false 180 180 90
+Circle -16777216 true false 30 180 90
+Polygon -16777216 true false 162 80 132 78 134 135 209 135 194 105 189 96 180 89
+Circle -7500403 true true 47 195 58
+Circle -7500403 true true 195 195 58
+
 car-rotate
 true
 13
 Rectangle -2064490 true true 90 15 210 300
 Polygon -16777216 true false 105 90 195 90 180 150 120 150 105 90
 Rectangle -16777216 true false 105 240 195 255
-Rectangle -2674135 true false 90 270 120 300
-Rectangle -2674135 true false 180 270 210 300
-Rectangle -1184463 true false 180 15 210 45
-Rectangle -1184463 true false 90 15 120 45
+Rectangle -2674135 true false 90 285 105 300
+Rectangle -2674135 true false 195 285 210 300
+Rectangle -1184463 true false 195 15 210 30
+Rectangle -1184463 true false 90 15 105 30
 Rectangle -16777216 true false 195 120 210 210
 Rectangle -16777216 true false 90 120 105 210
 
@@ -872,30 +790,6 @@ NetLogo 6.1.1
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
-<experiments>
-  <experiment name="experiment" repetitions="1" runMetricsEveryStep="true">
-    <setup>setup</setup>
-    <go>go</go>
-    <timeLimit steps="200"/>
-    <metric>count turtles</metric>
-    <enumeratedValueSet variable="nbcars">
-      <value value="3"/>
-      <value value="4"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="turn-left-influence">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="road-setup">
-      <value value="&quot;city&quot;"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="turn-right-influence">
-      <value value="100"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="forward-influence">
-      <value value="5"/>
-    </enumeratedValueSet>
-  </experiment>
-</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

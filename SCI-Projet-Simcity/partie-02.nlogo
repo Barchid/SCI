@@ -17,7 +17,13 @@ cars-own [
 ;#################################### SETUP #######################################
 to setup
   ca
-  build-road
+  ; choix de la construction de la route
+  ifelse road-setup = "city" [
+    build-road
+  ]
+  [
+    ask patches with [pxcor mod 2 = 0 or pycor mod 2 = 0] [set pcolor white]
+  ]
 
   ; Création des houses
   create-houses nb-houses [init-house]
@@ -58,6 +64,10 @@ end
 
 ; go loop
 to go
+  if nb-ticks-max != 0 and nb-ticks-max - 1 < ticks [
+   stop
+  ]
+
   ask cars [car-decide]
   ask houses [house-decide]
   tick
@@ -241,7 +251,7 @@ nb-occupation
 nb-occupation
 0
 100
-69.0
+10.0
 1
 1
 NIL
@@ -256,7 +266,7 @@ nb-houses
 nb-houses
 1
 100
-4.0
+50.0
 1
 1
 NIL
@@ -270,9 +280,9 @@ SLIDER
 car-frequence
 car-frequence
 0
-500
-10.0
-10
+100
+100.0
+1
 1
 NIL
 HORIZONTAL
@@ -366,6 +376,41 @@ Plus la valeur est petite, plus la fréquence est élevée
 11
 0.0
 1
+
+SLIDER
+510
+336
+822
+369
+nb-ticks-max
+nb-ticks-max
+0
+100000
+5000.0
+100
+1
+ticks
+HORIZONTAL
+
+TEXTBOX
+511
+312
+800
+340
+Durée de la simulation (0 pour une simulation infinie)
+11
+0.0
+1
+
+CHOOSER
+266
+238
+404
+283
+road-setup
+road-setup
+"city" "grille"
+0
 
 @#$#@#$#@
 ## WHAT IS IT?
