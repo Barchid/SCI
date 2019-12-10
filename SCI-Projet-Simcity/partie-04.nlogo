@@ -67,7 +67,47 @@ to setup
   ; créer l'horloge qui affichera l'heure
   create-clocks 1 [init-clock]
 
+  ; Correction du biais de départ
+  if(bias-correction?) [
+    place-on-road
+  ]
+
   reset-ticks
+end
+
+; fonction lancée pour tenter de corriger le biais de départ
+; Donne une chance de placer des elec-supplies, water-supplies et des cars
+to place-on-road
+  repeat int(elec-max / 10 + water-max / 10) [
+    place-power-stations-on-road
+    place-water-towers-on-road
+  ]
+end
+
+to place-power-stations-on-road
+  let powers [self] of power-stations
+  foreach powers [ power ->
+    if (random elec-frequence) < power-station-max-workers [
+      create-elec-supplies 1 [
+        init-elec-supply power
+        move-to one-of patches with [pcolor = white]
+        face one-of neighbors4 with [pcolor = white]
+      ]
+    ]
+  ]
+end
+
+to place-water-towers-on-road
+  let towers [self] of water-towers
+  foreach towers [ tower ->
+    if (random water-frequence) < water-tower-max-workers [
+      create-water-supplies 1 [
+        init-water-supply tower
+        move-to one-of patches with [pcolor = white]
+        face one-of neighbors4 with [pcolor = white]
+      ]
+    ]
+  ]
 end
 
 ; construire les patchs pour faire la route
@@ -676,10 +716,10 @@ to toggle-job-offers
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-998
-19
-1747
-769
+1063
+805
+1812
+1555
 -1
 -1
 22.455
@@ -756,7 +796,7 @@ nb-houses
 nb-houses
 1
 100
-1.0
+100.0
 1
 1
 NIL
@@ -801,7 +841,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-10.0
+2.0
 1
 1
 NIL
@@ -816,17 +856,17 @@ nb-water-towers
 nb-water-towers
 1
 100
-10.0
+2.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-188
-355
-383
-388
+13
+310
+223
+343
 water-tower-max-workers
 water-tower-max-workers
 1
@@ -838,10 +878,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-189
-313
-392
-346
+14
+268
+224
+301
 power-station-max-workers
 power-station-max-workers
 1
@@ -861,38 +901,38 @@ nb-occupations
 nb-occupations
 1
 100
-100.0
+40.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-617
-472
-789
-505
+717
+353
+941
+386
 water-frequence
 water-frequence
 1
-1000
-51.0
-10
+200
+200.0
+1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-628
-549
-800
-582
+714
+410
+940
+443
 elec-frequence
 elec-frequence
 1
-1000
-41.0
-10
+200
+200.0
+1
 1
 NIL
 HORIZONTAL
@@ -900,7 +940,7 @@ HORIZONTAL
 SLIDER
 11
 192
-183
+222
 225
 ticks-per-hour
 ticks-per-hour
@@ -913,65 +953,65 @@ NIL
 HORIZONTAL
 
 SLIDER
-186
-410
-398
-443
+254
+311
+484
+344
 water-tower-firing-frequence
 water-tower-firing-frequence
 0
-1000
-20.0
-10
+100
+100.0
+1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-188
-533
-408
-566
+254
+267
+485
+300
 power-station-firing-frequence
 power-station-firing-frequence
 0
-1000
-20.0
-10
+100
+100.0
+1
 1
 NIL
 HORIZONTAL
 
 SWITCH
-26
-624
-180
-657
+15
+448
+169
+481
 display-job-offers
 display-job-offers
+1
+1
+-1000
+
+SWITCH
+187
+447
+356
+480
+display-elec-supplies
+display-elec-supplies
+1
+1
+-1000
+
+SWITCH
+373
+447
+552
+480
+display-water-supplies
+display-water-supplies
 0
-1
--1000
-
-SWITCH
-237
-670
-406
-703
-display-elec-supplies
-display-elec-supplies
-1
-1
--1000
-
-SWITCH
-500
-722
-679
-755
-display-water-supplies
-display-water-supplies
-1
 1
 -1000
 
@@ -1017,11 +1057,80 @@ nb-days-max
 nb-days-max
 0
 1825
-70.0
+30.0
 1
 1
 NIL
 HORIZONTAL
+
+PLOT
+972
+318
+1642
+604
+Population des maisons en fonction du temps
+Temps (ticks)
+Nombre de maisons
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Vivantes" 1.0 0 -10899396 true "" "plot count houses with [color != grey]"
+"Mortes" 1.0 0 -2674135 true "" "plot count houses with [color = grey]"
+
+PLOT
+971
+30
+1644
+299
+Quantité de ressources en fonction du temps
+Temps (ticks)
+Nombre de ressources
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Électricité" 1.0 0 -1184463 true "" "plot count elec-supplies"
+"Eau" 1.0 0 -13345367 true "" "plot count water-supplies"
+
+PLOT
+13
+502
+734
+755
+Démographie en fonction du temps
+Temps (tick)
+Nombre d'habitants
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"Total" 1.0 0 -16777216 true "" "plot count inhabitants"
+"Chômeurs" 1.0 0 -2674135 true "" "plot count inhabitants with [employer = nobody]"
+"Travailleurs" 1.0 0 -10899396 true "" "plot count inhabitants with [employer != nobody]"
+
+SWITCH
+18
+142
+161
+175
+bias-correction?
+bias-correction?
+1
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?

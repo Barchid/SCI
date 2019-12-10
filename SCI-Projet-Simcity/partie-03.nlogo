@@ -516,8 +516,8 @@ SLIDER
 car-frequence
 car-frequence
 0
-100
-100.0
+200
+15.0
 1
 1
 NIL
@@ -561,8 +561,8 @@ SLIDER
 water-frequence
 water-frequence
 0
-100
-0.0
+200
+200.0
 1
 1
 NIL
@@ -576,8 +576,8 @@ SLIDER
 elec-frequence
 elec-frequence
 0
-100
-0.0
+200
+200.0
 1
 1
 NIL
@@ -592,7 +592,7 @@ nb-power-stations
 nb-power-stations
 1
 100
-1.0
+2.0
 1
 1
 NIL
@@ -705,7 +705,7 @@ nb-ticks-max
 nb-ticks-max
 0
 100000
-50000.0
+25000.0
 100
 1
 NIL
@@ -836,7 +836,7 @@ SWITCH
 262
 bias-correction?
 bias-correction?
-1
+0
 1
 -1000
 
